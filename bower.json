@@ -1,7 +1,7 @@
 {
   "name": "mosaic-styles",
   "main": "dist/mosaic-styles.js",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "homepage": "https://github.com/mkotelnikov/mosaic-styles",
   "authors": [
     "kotelnikov <mikhail.kotelnikov@ubimix.com>"
