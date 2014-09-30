@@ -5,10 +5,8 @@ module.exports = ValueGenerator;
 
 function ValueGenerator(obj) {
     obj = obj || {};
-    this.from = obj.from || 0;
-    this.to = obj.to || 1;
-    this.fromVal = obj.fromVal || 0;
-    this.toVal = obj.toVal || 1;
+    this.domain(obj.from, obj.to);
+    this.range(obj.fromVal, obj.toVal);
     this.easing = obj.easing || BezierEasing.css.linear;
     return this;
 }
@@ -36,10 +34,13 @@ ValueGenerator.prototype = {
         var toVal = this.toVal;
         var easing = this.easing;
         return function(val) {
+            if (to === from)
+                return toVal;
             var p = (val - from) / (to - from);
-            p = Math.min(1, Math.max(0, p));
+            p = Math.max(0, Math.min(p, 1));
             p = easing(p);
-            return fromVal + (toVal - fromVal) * p;
+            var result = fromVal + (toVal - fromVal) * p;
+            return result;
         };
     },
     bind : function(f, context) {
@@ -54,13 +55,13 @@ ValueGenerator.prototype = {
         };
     },
     domain : function(from, to) {
-        this.from = from;
-        this.to = to;
+        this.from = isNaN(from) ? 0 : from;
+        this.to = isNaN(to) ? 1 : to;
         return this;
     },
     range : function(from, to) {
-        this.fromVal = from;
-        this.toVal = to;
+        this.fromVal = isNaN(from) ? 0 : from;
+        this.toVal = isNaN(to) ? 1 : to;
         return this;
     },
 

@@ -26,6 +26,17 @@ ValueGenerator.copy(StylesGenerator.prototype, {
         this._attr = name;
         return this;
     },
+    bind : function(f, context) {
+        var m = this.build();
+        return function(val) {
+            var r = m(val);
+            var args = [ r ];
+            for (var i = 0; i < arguments.length; i++) {
+                args.push(arguments[i]);
+            }
+            return f.apply(context, args);
+        };
+    },
     build : function() {
         this._buildAttr();
         var generators = {};

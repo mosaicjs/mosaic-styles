@@ -45,4 +45,16 @@ describe('ValueGenerator', function() {
         });
         expect(generator(15, '[', ']')).to.eql('[x:15, y:160]');
     });
+    it('should manage decreasing values', function() {
+        var generator = new ValueGenerator()//
+        .linear()//
+        .domain(10, 20)//
+        .range(0.1, 0)//
+        .build();
+        for (var i = 10; i <= 20; i++) {
+            var test = generator(i);
+            test = Math.round(100 * test) / 100;
+            expect(test).to.eql((20 - i) / 100);
+        }
+    });
 });
