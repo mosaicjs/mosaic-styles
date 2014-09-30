@@ -1,0 +1,24 @@
+{
+  "name": "mosaic-styles",
+  "main": "dist/mosaic-styles.js",
+  "version": "0.0.1",
+  "homepage": "https://github.com/mkotelnikov/mosaic-styles",
+  "authors": [
+    "kotelnikov <mikhail.kotelnikov@ubimix.com>"
+  ],
+  "description": "A simple library allowing to define styles as a function",
+  "keywords": [
+    "styles",
+    "map",
+    "carto"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "./app/libs",
+    "test",
+    "tests"
+  ]
+}
