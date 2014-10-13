@@ -3,6 +3,37 @@ var styles = require('..');
 var ValueGenerator = styles.ValueGenerator;
 
 describe('ValueGenerator', function() {
+
+    it('should correctly trim minimal and maximal range values', function() {
+        var v = new ValueGenerator()//
+        .linear()//
+        .domain(10, 30)//
+        .range(100, 300)//
+        .trim(true, true);//
+        var generator;
+
+        generator = v.trim(true, true).build();
+        expect(generator(10)).to.eql(100);
+        expect(generator(30)).to.eql(300);
+        expect(generator(15)).to.eql(150);
+        expect(generator(5)).to.eql(undefined);
+        expect(generator(35)).to.eql(undefined);
+
+        generator = v.trim(false, true).build();
+        expect(generator(10)).to.eql(100);
+        expect(generator(30)).to.eql(300);
+        expect(generator(15)).to.eql(150);
+        expect(generator(5)).to.eql(100);
+        expect(generator(35)).to.eql(undefined);
+
+        generator = v.trim(true, false).build();
+        expect(generator(10)).to.eql(100);
+        expect(generator(30)).to.eql(300);
+        expect(generator(15)).to.eql(150);
+        expect(generator(5)).to.eql(undefined);
+        expect(generator(35)).to.eql(300);
+    });
+
     it('should contain pre-defined types of easing', function() {
         var zoomMin = 7;
         var zoomMax = 14;

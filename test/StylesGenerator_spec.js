@@ -138,4 +138,48 @@ describe('StylesGenerator', function() {
             expect(test).to.eql(controls[i - from]);
         }
     });
+
+    it('should correctly trim minimal and maximal range values', function() {
+        var from = 5;
+        var to = 10;
+        var generator = new StylesGenerator().domain(from, to).linear() //
+        .attr('opacity').trim(true, false).range(0.1, 1) // 
+        .attr('height').range(20, 220) //
+        .attr('width').trim(false, true).range(10, 110) //
+        .bind(function(style, zoom) {
+            if (style.opacity !== undefined) {
+                style.opacity = parseFloat(style.opacity.toFixed(2));
+            }
+            return style;
+        });
+
+        // Opacity is undefined before the valid zoom range
+        expect(generator(4)).to.eql({
+            width : 10,
+            height : 20,
+            opacity : undefined
+        });
+        expect(generator(5)).to.eql({
+            width : 10,
+            height : 20,
+            opacity : 0.1
+        });
+        expect(generator(7)).to.eql({
+            width : 50,
+            height : 100,
+            opacity : 0.46
+        });
+        expect(generator(10)).to.eql({
+            width : 110,
+            height : 220,
+            opacity : 1
+        });
+        // Width is undefined after the valid zoom range
+        expect(generator(15)).to.eql({
+            width : undefined,
+            height : 220,
+            opacity : 1
+        });
+    });
+
 });

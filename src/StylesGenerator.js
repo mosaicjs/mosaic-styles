@@ -18,6 +18,7 @@ ValueGenerator.copy(StylesGenerator.prototype, {
     _buildAttr : function() {
         if (this._attr) {
             this._attributes[this._attr] = new ValueGenerator(this);
+            this.trim(false, false);
         }
         return this;
     },
@@ -26,12 +27,6 @@ ValueGenerator.copy(StylesGenerator.prototype, {
             return this._attributes;
         }
         return this._attributes[name];
-    },
-    mapping : function(mapping) {
-        if (mapping === undefined)
-            return this._mapping;
-        this._mapping = mapping;
-        return this;
     },
     attr : function(name) {
         this._buildAttr();

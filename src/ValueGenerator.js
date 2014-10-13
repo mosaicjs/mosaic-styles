@@ -5,6 +5,7 @@ module.exports = ValueGenerator;
 
 function ValueGenerator(obj) {
     obj = obj || {};
+    this.trim(obj._trimFrom, obj._trimTo);
     this.domain(obj._from, obj._to);
     this.range(obj._fromVal, obj._toVal);
     this.transform(obj._transform || BezierEasing.css.linear);
@@ -33,15 +34,28 @@ ValueGenerator.prototype = {
         var fromVal = this._fromVal;
         var toVal = this._toVal;
         var transform = this._transform;
+        var trimFrom = this._trimFrom;
+        var trimTo = this._trimTo;
         return function(val) {
             if (to === from)
                 return toVal;
             var p = (val - from) / (to - from);
+            if (p < 0 && trimFrom) {
+                return undefined;
+            }
+            if (p > 1 && trimTo) {
+                return undefined;
+            }
             p = Math.max(0, Math.min(p, 1));
             p = transform(p);
             var result = fromVal + (toVal - fromVal) * p;
             return result;
         };
+    },
+    trim : function(trimFrom, trimTo) {
+        this._trimFrom = !!trimFrom;
+        this._trimTo = !!trimTo;
+        return this;
     },
     transform : function(transform) {
         if (transform === undefined)
