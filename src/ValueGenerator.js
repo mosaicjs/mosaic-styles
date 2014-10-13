@@ -5,9 +5,9 @@ module.exports = ValueGenerator;
 
 function ValueGenerator(obj) {
     obj = obj || {};
-    this.domain(obj.from, obj.to);
-    this.range(obj.fromVal, obj.toVal);
-    this.easing = obj.easing || BezierEasing.css.linear;
+    this.domain(obj._from, obj._to);
+    this.range(obj._fromVal, obj._toVal);
+    this.transform(obj._transform || BezierEasing.css.linear);
     return this;
 }
 
@@ -28,20 +28,26 @@ ValueGenerator.prototype = {
         return new ValueGenerator(this);
     },
     build : function() {
-        var from = this.from;
-        var to = this.to;
-        var fromVal = this.fromVal;
-        var toVal = this.toVal;
-        var easing = this.easing;
+        var from = this._from;
+        var to = this._to;
+        var fromVal = this._fromVal;
+        var toVal = this._toVal;
+        var transform = this._transform;
         return function(val) {
             if (to === from)
                 return toVal;
             var p = (val - from) / (to - from);
             p = Math.max(0, Math.min(p, 1));
-            p = easing(p);
+            p = transform(p);
             var result = fromVal + (toVal - fromVal) * p;
             return result;
         };
+    },
+    transform : function(transform) {
+        if (transform === undefined)
+            return this._transform;
+        this._transform = transform;
+        return this;
     },
     bind : function(f, context) {
         var m = this.build();
@@ -55,39 +61,43 @@ ValueGenerator.prototype = {
         };
     },
     domain : function(from, to) {
-        this.from = isNaN(from) ? 0 : from;
-        this.to = isNaN(to) ? 1 : to;
+        if (from === undefined && to === undefined)
+            return [ this._from, this._to ];
+        this._from = isNaN(from) ? 0 : from;
+        this._to = isNaN(to) ? 1 : to;
         return this;
     },
     range : function(from, to) {
-        this.fromVal = isNaN(from) ? 0 : from;
-        this.toVal = isNaN(to) ? 1 : to;
+        if (from === undefined && to === undefined)
+            return [ this._fromVal, this._toVal ];
+        this._fromVal = isNaN(from) ? 0 : from;
+        this._toVal = isNaN(to) ? 1 : to;
         return this;
     },
 
     bezier : function(mX1, mY1, mX2, mY2) {
-        this.easing = BezierEasing(mX1, mY1, mX2, mY2);
+        this.transform(BezierEasing(mX1, mY1, mX2, mY2));
         return this;
     },
 
     ease : function() {
-        this.easing = BezierEasing.css.ease;
+        this.transform(BezierEasing.css.ease);
         return this;
     },
     linear : function() {
-        this.easing = BezierEasing.css.linear;
+        this.transform(BezierEasing.css.linear);
         return this;
     },
     easeIn : function() {
-        this.easing = BezierEasing.css['ease-in'];
+        this.transform(BezierEasing.css['ease-in']);
         return this;
     },
     easeOut : function() {
-        this.easing = BezierEasing.css['ease-out'];
+        this.transform(BezierEasing.css['ease-out']);
         return this;
     },
     easeInOut : function() {
-        this.easing = BezierEasing.css['ease-in-out'];
+        this.transform(BezierEasing.css['ease-in-out']);
         return this;
     },
 };

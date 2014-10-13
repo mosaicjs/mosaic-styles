@@ -3,7 +3,7 @@ module.exports = function(grunt) {
     var configurator = new UmxGruntConfig(require, grunt);
     configurator.initBump();
     configurator.initWebpack({
-        main : './',
+        main : './index',
         externals : []
     });
     configurator.initWatch();

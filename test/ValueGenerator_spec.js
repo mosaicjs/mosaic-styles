@@ -18,6 +18,7 @@ describe('ValueGenerator', function() {
             13 : 32,
             14 : 32
         };
+
         var generator = new ValueGenerator()//
         .ease()//
         .domain(zoomMin, zoomMax)//

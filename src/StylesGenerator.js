@@ -2,13 +2,19 @@ var ValueGenerator = require('./ValueGenerator');
 
 module.exports = StylesGenerator;
 
-function StylesGenerator() {
+function StylesGenerator(obj) {
+    if (obj) {
+        ValueGenerator.copy(this, obj);
+    }
     ValueGenerator.apply(this);
-    this._attr = null;
-    this._attributes = {};
+    this._attr = this._attr || null;
+    this._attributes = this._attributes || {};
 }
 ValueGenerator.copy(StylesGenerator.prototype, ValueGenerator.prototype);
 ValueGenerator.copy(StylesGenerator.prototype, {
+    clone : function() {
+        return new StylesGenerator(this);
+    },
     _buildAttr : function() {
         if (this._attr) {
             this._attributes[this._attr] = new ValueGenerator(this);
@@ -20,6 +26,12 @@ ValueGenerator.copy(StylesGenerator.prototype, {
             return this._attributes;
         }
         return this._attributes[name];
+    },
+    mapping : function(mapping) {
+        if (mapping === undefined)
+            return this._mapping;
+        this._mapping = mapping;
+        return this;
     },
     attr : function(name) {
         this._buildAttr();
