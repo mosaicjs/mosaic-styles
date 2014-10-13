@@ -139,6 +139,70 @@ describe('StylesGenerator', function() {
         }
     });
 
+    it('should be able to manage styles depending on two ' + //
+    'or more variables', function() {
+        function round(styles) {
+            var result = {};
+            for ( var key in styles) {
+                var val = styles[key];
+                result[key] = Math.round(val);
+            }
+            return result;
+        }
+        var minZoom = 0;
+        var maxZoom = 10;
+        // Generator depending on zoom and time; zoom is the direct parameter
+        // Time could be changed using the setTime method on the generator.
+        var generator = (function() {
+            var time = 0;
+            var generator = new StylesGenerator().domain(minZoom, maxZoom)//
+            .linear().wrap(function(val) {
+                return val * time;
+            })//
+            .attr('height').range(20, 220) //
+            .attr('width').trim(false, true).range(10, 110)//
+            .bind(function(style) {
+                return round(style);
+            });//
+            generator.setTime = function(t) {
+                time = t;
+            };
+            return generator;
+        })();
+
+        // Use time as a second dynamic variable (second dimension)
+        for (var i = 0; i < 10; i++) {
+            var t = i / 10;
+            generator.setTime(t);
+
+            // Zoom 0
+            expect(generator(0)).to.eql(round({
+                height : 20 + 200 * t * 0,
+                width : 10 + 100 * t * 0
+            }));
+            // Zoom 3
+            expect(generator(3)).to.eql(round({
+                height : 20 + 200 * t * 0.3,
+                width : 10 + 100 * t * 0.3
+            }));
+            // Zoom 5
+            expect(generator(5)).to.eql(round({
+                height : 20 + 200 * t * 0.5,
+                width : 10 + 100 * t * 0.5
+            }));
+            // Zoom 8
+            expect(generator(8)).to.eql(round({
+                height : 20 + 200 * t * 0.8,
+                width : 10 + 100 * t * 0.8
+            }));
+            // Zoom 10
+            expect(generator(10)).to.eql(round({
+                height : 20 + 200 * t,
+                width : 10 + 100 * t
+            }));
+        }
+    });
+
     it('should correctly trim minimal and maximal range values', function() {
         var from = 5;
         var to = 10;

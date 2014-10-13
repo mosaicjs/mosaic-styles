@@ -63,6 +63,17 @@ ValueGenerator.prototype = {
         this._transform = transform;
         return this;
     },
+    wrap : function(f, context) {
+        var transform = this.transform();
+        return this.transform(function(val) {
+            var r = transform.call(this, val);
+            var args = [ r ];
+            for (var i = 0; i < arguments.length; i++) {
+                args.push(arguments[i]);
+            }
+            return f.apply(context, args);
+        });
+    },
     bind : function(f, context) {
         var m = this.build();
         return function(val) {
