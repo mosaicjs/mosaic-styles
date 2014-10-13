@@ -1,5 +1,5 @@
 /*!
- * mosaic-styles v0.0.4 | License: MIT 
+ * mosaic-styles v0.0.5 | License: MIT 
  * 
  */
 (function webpackUniversalModuleDefinition(root, factory) {
