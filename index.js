@@ -1,6 +1,6 @@
-var ValueGenerator = require('./src/ValueGenerator');
-var StylesGenerator = require('./src/StylesGenerator');
 module.exports = {
-    ValueGenerator : ValueGenerator,
-    StylesGenerator : StylesGenerator
+    ValueGenerator : require('./src/ValueGenerator'),
+    StylesGenerator : require('./src/StylesGenerator'),
+    Color : require('./src/Color'),
+    Colors : require('./src/Colors')
 };
