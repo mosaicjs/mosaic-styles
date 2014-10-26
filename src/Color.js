@@ -27,7 +27,7 @@ Color.prototype = {
 
     /** Creates a clone of this instance. */
     clone : function() {
-        return new Color(this);
+        return Color.color(this.rgba);
     },
 
     // -----------------------------------------------------------------------
@@ -195,10 +195,6 @@ Color.prototype = {
      *            a relative participation of each color in the final result;
      *            value in the range [0..1]
      */
-    // Copyright (c) 2006-2009 Hampton Catlin, Nathan Weizenbaum, and Chris
-    // Eppstein
-    // http://sass-lang.com
-    //
     mix : function(color, weight) {
         return Color.mix(this, color, weight);
     },
@@ -362,13 +358,14 @@ Color.prototype = {
 };
 
 Color.color = function(color) {
-    if (typeof color === 'string') {
-        color = new Color(color);
-    } else if (Array.isArray(color)) {
-        color = new Color(color);
+    if (color instanceof Color) {
+        return color;
     }
-    return color;
+    return new Color(color);
 }
+
+// Copyright (c) 2006-2009 Hampton Catlin, Nathan Weizenbaum, and Chris
+// Eppstein http://sass-lang.com
 Color.mix = function(first, second, weight) {
     first = Color.color(first);
     second = Color.color(second);
@@ -384,7 +381,7 @@ Color.mix = function(first, second, weight) {
             Math.round(first.rgba[1] * w1 + second.rgba[1] * w2),
             Math.round(first.rgba[2] * w1 + second.rgba[2] * w2),
             first.rgba[3] * p + second.rgba[3] * (1 - p) ];
-    var result = new Color(rgba);
+    var result = Color.color(rgba);
     return result;
 }
 // -----------------------------------------------------------------------
@@ -414,7 +411,7 @@ function colorBlend(mode) {
             }
             rgba[i] = Math.round(cr * 255);
         }
-        return new Color(rgba);
+        return Color.color(rgba);
     }
 }
 var colorBlendMode = {
@@ -472,7 +469,7 @@ for (f in colorBlendMode) {
 }
 
 Color.fromHSL = function(h, s, l, a) {
-    return new Color().fromHSL(h, s, l, a);
+    return Color.color('').fromHSL(h, s, l, a);
 }
 
 Color.toHex = function toHex(v) {

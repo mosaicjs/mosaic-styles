@@ -1,4 +1,5 @@
 var ValueGenerator = require('./ValueGenerator');
+var Color = require('./Color');
 
 module.exports = StylesGenerator;
 
@@ -20,7 +21,7 @@ ValueGenerator.copy(StylesGenerator.prototype, {
             this._attributes[this._attr] = new ValueGenerator(this);
             this.trim(false, false);
         }
-        return this;
+        return this.reset(this);
     },
     get : function(name) {
         if (name === undefined) {
@@ -32,6 +33,11 @@ ValueGenerator.copy(StylesGenerator.prototype, {
         this._buildAttr();
         this._attr = name;
         return this;
+    },
+    color : function(from, to) {
+        return this.range(0, 1, function(val) {
+            return Color.mix(from, to, val).toHex();
+        });
     },
     bind : function(f, context) {
         var m = this.build();

@@ -1,5 +1,5 @@
 /*!
- * mosaic-styles v0.0.6 | License: MIT 
+ * mosaic-styles v0.0.7 | License: MIT 
  * 
  */
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -76,10 +76,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function ValueGenerator(obj) {
 	    obj = obj || {};
-	    this.trim(obj._trimFrom, obj._trimTo);
-	    this.domain(obj._from, obj._to);
-	    this.range(obj._fromVal, obj._toVal);
-	    this.transform(obj._transform || BezierEasing.css.linear);
+	    this.reset(obj);
+	    this._domain = obj._domain || this._domain;
+	    this._range = obj._range || this._range;
+	    this._core = obj._core || this._core || BezierEasing.css.linear;
 	    return this;
 	}
 
@@ -96,55 +96,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	ValueGenerator.prototype = {
+	    reset : function(obj) {
+	        obj = obj || {};
+	        this.trim(obj._trimFrom, obj._trimTo);
+	        this.domain(obj._from, obj._to, obj._domainTransform);
+	        this.range(obj._fromVal, obj._toVal, obj._rangeTransform);
+	        this.setCoreTransformation(BezierEasing.css.linear);
+	        return this;
+	    },
 	    clone : function() {
 	        return new ValueGenerator(this);
 	    },
 	    build : function() {
-	        var from = this._from;
-	        var to = this._to;
-	        var fromVal = this._fromVal;
-	        var toVal = this._toVal;
-	        var transform = this._transform;
-	        var trimFrom = this._trimFrom;
-	        var trimTo = this._trimTo;
-	        return function(val) {
-	            if (to === from)
-	                return toVal;
-	            var p = (val - from) / (to - from);
-	            if (p < 0 && trimFrom) {
-	                return undefined;
+	        var that = this;
+	        return function(val, args) {
+	            // Domain transformation // domain value => [0..1] value
+	            val = that._domain(val, args);
+	            // Core transformation [0..1] => [0..1]
+	            if (val !== undefined) {
+	                val = Math.max(0, Math.min(val, 1));
+	                val = that._core(val, args);
 	            }
-	            if (p > 1 && trimTo) {
-	                return undefined;
-	            }
-	            p = Math.max(0, Math.min(p, 1));
-	            p = transform(p);
-	            var result = fromVal + (toVal - fromVal) * p;
-	            return result;
+	            // Range transformation // [0..1] value => range value
+	            val = that._range(val, args);
+	            return val;
 	        };
 	    },
-	    trim : function(trimFrom, trimTo) {
-	        this._trimFrom = !!trimFrom;
-	        this._trimTo = !!trimTo;
-	        return this;
-	    },
-	    transform : function(transform) {
-	        if (transform === undefined)
-	            return this._transform;
-	        this._transform = transform;
-	        return this;
-	    },
-	    wrap : function(f, context) {
-	        var transform = this.transform();
-	        return this.transform(function(val) {
-	            var r = transform.call(this, val);
-	            var args = [ r ];
-	            for (var i = 0; i < arguments.length; i++) {
-	                args.push(arguments[i]);
-	            }
-	            return f.apply(context, args);
-	        });
-	    },
+
 	    bind : function(f, context) {
 	        var m = this.build();
 	        return function(val) {
@@ -156,46 +134,121 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return f.apply(context, args);
 	        };
 	    },
-	    domain : function(from, to) {
-	        if (from === undefined && to === undefined)
-	            return [ this._from, this._to ];
-	        this._from = isNaN(from) ? 0 : from;
-	        this._to = isNaN(to) ? 1 : to;
-	        return this;
+
+	    // ----------------------------------------------------------------------
+	    // Domain transformations
+
+	    setDomainTransformation : function(f) {
+	        return this._setTransformation('_domain', f);
 	    },
-	    range : function(from, to) {
-	        if (from === undefined && to === undefined)
-	            return [ this._fromVal, this._toVal ];
-	        this._fromVal = isNaN(from) ? 0 : from;
-	        this._toVal = isNaN(to) ? 1 : to;
+
+	    trim : function(trimFrom, trimTo) {
+	        this._trimFrom = !!trimFrom;
+	        this._trimTo = !!trimTo;
 	        return this;
 	    },
 
+	    domain : function(from, to, transform) {
+	        this._from = isNaN(from) ? 0 : from;
+	        this._to = isNaN(to) ? 1 : to;
+	        this._domainTransform = transform;
+	        return this.setDomainTransformation(function(val, args) {
+	            if (this._domainTransform) {
+	                val = this._domainTransform(val);
+	            }
+	            if (this._to === this._from)
+	                return 1;
+	            var p = (val - this._from) / (this._to - this._from);
+	            if (p < 0 && this._trimFrom) {
+	                return undefined;
+	            }
+	            if (p > 1 && this._trimTo) {
+	                return undefined;
+	            }
+	            return p;
+	        });
+	    },
+
+	    // ----------------------------------------------------------------------
+	    // Range transformations
+
+	    setRangeTransformation : function(f) {
+	        return this._setTransformation('_range', f);
+	    },
+
+	    range : function(from, to, transform) {
+	        this._fromVal = isNaN(from) ? 0 : from;
+	        this._toVal = isNaN(to) ? 1 : to;
+	        this._rangeTransform = transform;
+	        return this.setRangeTransformation(function(val, args) {
+	            if (val === undefined)
+	                return;
+	            var result = this._fromVal + (this._toVal - this._fromVal) * val;
+	            if (this._rangeTransform) {
+	                result = this._rangeTransform(result, val);
+	            }
+	            return result;
+	        });
+	    },
+
+	    // ----------------------------------------------------------------------
+	    // Core transformations
+
+	    setCoreTransformation : function(f) {
+	        return this._setTransformation('_core', f);
+	    },
+
+	    wrap : function(f) {
+	        return this._wrapTransformation('_core', f);
+	    },
+
 	    bezier : function(mX1, mY1, mX2, mY2) {
-	        this.transform(BezierEasing(mX1, mY1, mX2, mY2));
+	        this.setCoreTransformation(BezierEasing(mX1, mY1, mX2, mY2));
 	        return this;
 	    },
 
 	    ease : function() {
-	        this.transform(BezierEasing.css.ease);
+	        this.setCoreTransformation(BezierEasing.css.ease);
 	        return this;
 	    },
 	    linear : function() {
-	        this.transform(BezierEasing.css.linear);
+	        this.setCoreTransformation(BezierEasing.css.linear);
 	        return this;
 	    },
 	    easeIn : function() {
-	        this.transform(BezierEasing.css['ease-in']);
+	        this.setCoreTransformation(BezierEasing.css['ease-in']);
 	        return this;
 	    },
 	    easeOut : function() {
-	        this.transform(BezierEasing.css['ease-out']);
+	        this.setCoreTransformation(BezierEasing.css['ease-out']);
 	        return this;
 	    },
 	    easeInOut : function() {
-	        this.transform(BezierEasing.css['ease-in-out']);
+	        this.setCoreTransformation(BezierEasing.css['ease-in-out']);
 	        return this;
 	    },
+
+	    // ----------------------------------------------------------------------
+	    // 
+	    _setTransformation : function(key, f) {
+	        var transform = this[key];
+	        if (transform) {
+	            this[key] = function(val) {
+	                return f.apply(this, [ val, transform ]);
+	            };
+	        } else {
+	            this[key] = f;
+	        }
+	        return this;
+	    },
+
+	    _wrapTransformation : function(key, f) {
+	        return this._setTransformation(key, function(val, transform) {
+	            val = transform ? transform.call(this, val) : val;
+	            return f.call(this, val);
+	        });
+	    }
+
 	};
 
 
@@ -204,6 +257,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var ValueGenerator = __webpack_require__(1);
+	var Color = __webpack_require__(3);
 
 	module.exports = StylesGenerator;
 
@@ -225,7 +279,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this._attributes[this._attr] = new ValueGenerator(this);
 	            this.trim(false, false);
 	        }
-	        return this;
+	        return this.reset(this);
 	    },
 	    get : function(name) {
 	        if (name === undefined) {
@@ -237,6 +291,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._buildAttr();
 	        this._attr = name;
 	        return this;
+	    },
+	    color : function(from, to) {
+	        return this.range(0, 1, function(val) {
+	            return Color.mix(from, to, val).toHex();
+	        });
 	    },
 	    bind : function(f, context) {
 	        var m = this.build();
@@ -301,7 +360,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    /** Creates a clone of this instance. */
 	    clone : function() {
-	        return new Color(this);
+	        return Color.color(this.rgba);
 	    },
 
 	    // -----------------------------------------------------------------------
@@ -469,10 +528,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	     *            a relative participation of each color in the final result;
 	     *            value in the range [0..1]
 	     */
-	    // Copyright (c) 2006-2009 Hampton Catlin, Nathan Weizenbaum, and Chris
-	    // Eppstein
-	    // http://sass-lang.com
-	    //
 	    mix : function(color, weight) {
 	        return Color.mix(this, color, weight);
 	    },
@@ -636,13 +691,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	Color.color = function(color) {
-	    if (typeof color === 'string') {
-	        color = new Color(color);
-	    } else if (Array.isArray(color)) {
-	        color = new Color(color);
+	    if (color instanceof Color) {
+	        return color;
 	    }
-	    return color;
+	    return new Color(color);
 	}
+
+	// Copyright (c) 2006-2009 Hampton Catlin, Nathan Weizenbaum, and Chris
+	// Eppstein http://sass-lang.com
 	Color.mix = function(first, second, weight) {
 	    first = Color.color(first);
 	    second = Color.color(second);
@@ -658,7 +714,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            Math.round(first.rgba[1] * w1 + second.rgba[1] * w2),
 	            Math.round(first.rgba[2] * w1 + second.rgba[2] * w2),
 	            first.rgba[3] * p + second.rgba[3] * (1 - p) ];
-	    var result = new Color(rgba);
+	    var result = Color.color(rgba);
 	    return result;
 	}
 	// -----------------------------------------------------------------------
@@ -688,7 +744,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            rgba[i] = Math.round(cr * 255);
 	        }
-	        return new Color(rgba);
+	        return Color.color(rgba);
 	    }
 	}
 	var colorBlendMode = {
@@ -746,7 +802,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	Color.fromHSL = function(h, s, l, a) {
-	    return new Color().fromHSL(h, s, l, a);
+	    return Color.color('').fromHSL(h, s, l, a);
 	}
 
 	Color.toHex = function toHex(v) {

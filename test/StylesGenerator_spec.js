@@ -9,13 +9,71 @@ describe('StylesGenerator', function() {
             expect(generator(i)).to.eql({});
         }
     });
+
+    it('should allow add value suffixes', function() {
+        var from = 0;
+        var to = 10;
+        var generator = new StylesGenerator()//
+        .attr('width').domain(from, to).range(2, 20, function(val) {
+            return Math.round(val) + 'px';
+        }).build();
+        for (var i = from; i <= to; i++) {
+            var test = generator(i);
+            expect(test).to.eql({
+                width : Math.round(2 + ((i - from) / (to - from)) * 18) + 'px'
+            });
+        }
+    });
+    it('should allow to generate color mixtures', function() {
+        var from = 0;
+        var to = 10;
+
+        var expected = [ '#808080', '#8d7373', '#996666', '#a65a5a', '#b34d4d',
+                '#c04040', '#cc3333', '#d92626', '#e61a1a', '#f20d0d',
+                '#ff0000' ];
+        (function() {
+            // Linear color transformation from gray to red
+            var generator = new StylesGenerator()//
+            .attr('backgroundColor').linear().domain(from, to).color('#808080',
+                    '#ff0000') // 
+            .build();
+            for (var i = from; i <= to; i++) {
+                var test = generator(i);
+                expect(test).to.eql({
+                    backgroundColor : expected[i]
+                });
+            }
+        })();
+
+        (function() {
+            // For easeInOut transformation colors are the same as with the
+            // linear transformation for the first position, last one and in
+            // the middle of the range.
+            var generator = new StylesGenerator()//
+            .attr('color').easeInOut().domain(from, to).color('#808080',
+                    '#ff0000') // 
+            .build();
+            for (var i = from; i <= to; i++) {
+                var test = generator(i);
+                if (i == from || i == to || i == ((from + to) / 2)) {
+                    expect(test).to.eql({
+                        color : expected[i]
+                    });
+                } else {
+                    expect(test).not.eql({
+                        color : expected[i]
+                    });
+                }
+            }
+        })();
+    });
     it('should allow to generate multiple attributes', function() {
         var from = 0;
         var to = 10;
-        var generator = new StylesGenerator().domain(from, to) //
-        .attr('width').linear().range(10, 110) //
-        .attr('height').linear().range(20, 220) //
-        .attr('opacity').linear().range(0, 1) // 
+        var generator = new StylesGenerator()//
+        .attr('width').linear().domain(from, to).range(10, 110) //
+        .attr('height').linear().domain(from, to).range(20, 220) //
+        .attr('opacity').linear().domain(from, to).range(0, 1) // 
         .build();
         for (var i = from; i <= to; i++) {
             var test = generator(i);
@@ -32,10 +90,11 @@ describe('StylesGenerator', function() {
         var from = 8;
         var to = 15;
 
-        var generator = new StylesGenerator().domain(from, to) //
-        .attr('width').ease().range(10, 110) //
-        .attr('height').ease().range(20, 220) //
-        .attr('opacity').bezier(0.820, 0.245, 0.220, 1).range(0, 1) // 
+        var generator = new StylesGenerator() //
+        .attr('width').ease().domain(from, to).range(10, 110) //
+        .attr('height').ease().domain(from, to).range(20, 220) //
+        .attr('opacity').bezier(0.820, 0.245, 0.220, 1).domain(from, to).range(
+                0, 1) // 
         .build();
 
         var controls = [ {
@@ -86,10 +145,10 @@ describe('StylesGenerator', function() {
         var from = 8;
         var to = 15;
 
-        var generator = new StylesGenerator().domain(from, to).linear() //
-        .attr('width').range(10, 110) //
-        .attr('height').range(20, 220) //
-        .attr('opacity').range(0, 1) // 
+        var generator = new StylesGenerator()//
+        .attr('width').linear().domain(from, to).range(10, 110) //
+        .attr('height').linear().domain(from, to).range(20, 220) //
+        .attr('opacity').linear().domain(from, to).range(0, 1) // 
         .bind(function(style, zoom, suffix) {
             for ( var key in style) {
                 if (key !== 'opacity') {
@@ -141,28 +200,28 @@ describe('StylesGenerator', function() {
 
     it('should be able to manage styles depending on two ' + //
     'or more variables', function() {
-        function round(styles) {
-            var result = {};
-            for ( var key in styles) {
-                var val = styles[key];
-                result[key] = Math.round(val);
-            }
-            return result;
-        }
         var minZoom = 0;
         var maxZoom = 10;
         // Generator depending on zoom and time; zoom is the direct parameter
         // Time could be changed using the setTime method on the generator.
         var generator = (function() {
             var time = 0;
-            var generator = new StylesGenerator().domain(minZoom, maxZoom)//
-            .linear().wrap(function(val) {
+            function round(val) {
+                if (!val)
+                    return val;
+                var result = Math.round(val);
+                return result + 'px';
+            }
+            var transform = function(val) {
                 return val * time;
-            })//
-            .attr('height').range(20, 220) //
-            .attr('width').trim(false, true).range(10, 110)//
+            };
+            var generator = new StylesGenerator()//
+            .linear().domain(minZoom, maxZoom)//
+            .attr('height').range(20, 220, round).wrap(transform) //
+            .attr('width').trim(false, true).range(10, 110, round).wrap(
+                    transform)//
             .bind(function(style) {
-                return round(style);
+                return style;
             });//
             generator.setTime = function(t) {
                 time = t;
@@ -170,6 +229,14 @@ describe('StylesGenerator', function() {
             return generator;
         })();
 
+        function round(styles) {
+            var result = {};
+            for ( var key in styles) {
+                var val = styles[key];
+                result[key] = Math.round(val) + 'px';
+            }
+            return result;
+        }
         // Use time as a second dynamic variable (second dimension)
         for (var i = 0; i < 10; i++) {
             var t = i / 10;
