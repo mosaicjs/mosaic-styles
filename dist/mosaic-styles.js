@@ -62,7 +62,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ValueGenerator : __webpack_require__(1),
 	    StylesGenerator : __webpack_require__(2),
 	    Color : __webpack_require__(3),
-	    Colors : __webpack_require__(4)
+	    Colors : __webpack_require__(4),
+	    LessSerializer : __webpack_require__(5)
 	};
 
 /***/ },
@@ -70,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	// mosaic-styles
-	var BezierEasing = __webpack_require__(5);
+	var BezierEasing = __webpack_require__(6);
 
 	module.exports = ValueGenerator;
 
@@ -988,6 +989,62 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
+	module.exports = LessSerializer;
+
+	/** Serializes a hierarchy of style objects to a Less-like style string. */
+	function LessSerializer() {
+	}
+
+	LessSerializer.prototype = {
+
+	    serialize : function(css) {
+	        var result = '';
+	        for ( var key in css) {
+	            var value = css[key];
+	            result += this._serializeStyle(key, value);
+	            result += '\n\n';
+	        }
+	        return result;
+	    },
+
+	    _serializeValues : function(shift, prefix, css) {
+	        if (!prefix)
+	            prefix = '';
+	        var result = '';
+	        var that = this;
+	        for ( var key in css) {
+	            var value = css[key];
+	            if (typeof value === 'object') {
+	                result += shift + prefix + key + ' {\n'
+	                result += that._serializeValues(shift + '  ', '', value);
+	                result += shift + '}\n';
+	            } else {
+	                result += shift + prefix + key + ': ' + value + ';\n';
+	            }
+	        }
+	        return result;
+	    },
+
+	    _serializeStyle : function(name, css) {
+	        var result = '';
+	        if (typeof css === 'string') {
+	            var obj = {};
+	            obj[name] = css;
+	            result += this._serializeValues('  ', '', obj)
+	        } else {
+	            result += name + ' {\n';
+	            result += this._serializeValues('  ', '', css);
+	            result += '}';
+	        }
+	        return result;
+	    }
+	};
+
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
 	/**
 	 * BezierEasing - use bezier curve for transition easing function
 	 * by Gaëtan Renaudeau 2014 – MIT License
@@ -1001,9 +1058,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	(function (definition) {
 	  if (true) {
 	    module.exports = definition();
-	  }
-	  else if (typeof window.define === 'function' && window.define.amd) {
-	    window.define([], definition);
+	  } else if (typeof define === 'function' && define.amd) {
+	    define([], definition);
 	  } else {
 	    window.BezierEasing = definition();
 	  }
@@ -1098,7 +1154,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var initialSlope = getSlope(guessForT, mX1, mX2);
 	      if (initialSlope >= NEWTON_MIN_SLOPE) {
 	        return newtonRaphsonIterate(aX, guessForT);
-	      } else if (initialSlope == 0.0) {
+	      } else if (initialSlope === 0.0) {
 	        return guessForT;
 	      } else {
 	        return binarySubdivide(aX, intervalStart, intervalStart + kSampleStepSize);
@@ -1122,8 +1178,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 
 	    f.getControlPoints = function() { return [{ x: mX1, y: mY1 }, { x: mX2, y: mY2 }]; };
-	    var str = "BezierEasing("+[mX1, mY1, mX2, mY2]+")";
+
+	    var args = [mX1, mY1, mX2, mY2];
+	    var str = "BezierEasing("+args+")";
 	    f.toString = function () { return str; };
+
+	    var css = "cubic-bezier("+args+")";
+	    f.toCSS = function () { return css; };
 
 	    return f;
 	  }
