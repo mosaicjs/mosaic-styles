@@ -1,5 +1,5 @@
 /*!
- * mosaic-styles v0.0.7 | License: MIT 
+ * mosaic-styles v0.0.8 | License: MIT 
  * 
  */
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -462,7 +462,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     *            value in the range [0..1]
 	     */
 	    lighten : function(amount) {
-	        var hsl = from.toHSL();
+	        var hsl = this.toHSL();
 	        hsl.l += amount;
 	        hsl.l = clamp(hsl.l);
 	        return Color.fromHSL(hsl);
