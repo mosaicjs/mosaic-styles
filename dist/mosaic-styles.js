@@ -1,5 +1,5 @@
 /*!
- * mosaic-styles v0.0.8 | License: MIT 
+ * mosaic-styles v0.0.9 | License: MIT 
  * 
  */
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -63,7 +63,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    StylesGenerator : __webpack_require__(2),
 	    Color : __webpack_require__(3),
 	    Colors : __webpack_require__(4),
-	    LessSerializer : __webpack_require__(5)
+	    LessSerializer : __webpack_require__(5),
+	    RangeGenerator : __webpack_require__(6)
 	};
 
 /***/ },
@@ -71,10 +72,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	// mosaic-styles
-	var BezierEasing = __webpack_require__(6);
-
+	var BezierEasing = __webpack_require__(7);
+	
 	module.exports = ValueGenerator;
-
+	
 	function ValueGenerator(obj) {
 	    obj = obj || {};
 	    this.reset(obj);
@@ -83,7 +84,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this._core = obj._core || this._core || BezierEasing.css.linear;
 	    return this;
 	}
-
+	
 	ValueGenerator.copy = function(to, from) {
 	    from = from || this;
 	    to = to || {};
@@ -95,7 +96,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        to[key] = val;
 	    }
 	}
-
+	
 	ValueGenerator.prototype = {
 	    reset : function(obj) {
 	        obj = obj || {};
@@ -123,7 +124,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return val;
 	        };
 	    },
-
+	
 	    bind : function(f, context) {
 	        var m = this.build();
 	        return function(val) {
@@ -135,20 +136,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return f.apply(context, args);
 	        };
 	    },
-
+	
 	    // ----------------------------------------------------------------------
 	    // Domain transformations
-
+	
 	    setDomainTransformation : function(f) {
 	        return this._setTransformation('_domain', f);
 	    },
-
+	
 	    trim : function(trimFrom, trimTo) {
 	        this._trimFrom = !!trimFrom;
 	        this._trimTo = !!trimTo;
 	        return this;
 	    },
-
+	
 	    domain : function(from, to, transform) {
 	        this._from = isNaN(from) ? 0 : from;
 	        this._to = isNaN(to) ? 1 : to;
@@ -169,14 +170,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return p;
 	        });
 	    },
-
+	
 	    // ----------------------------------------------------------------------
 	    // Range transformations
-
+	
 	    setRangeTransformation : function(f) {
 	        return this._setTransformation('_range', f);
 	    },
-
+	
 	    range : function(from, to, transform) {
 	        this._fromVal = isNaN(from) ? 0 : from;
 	        this._toVal = isNaN(to) ? 1 : to;
@@ -191,23 +192,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return result;
 	        });
 	    },
-
+	
 	    // ----------------------------------------------------------------------
 	    // Core transformations
-
+	
 	    setCoreTransformation : function(f) {
 	        return this._setTransformation('_core', f);
 	    },
-
+	
 	    wrap : function(f) {
 	        return this._wrapTransformation('_core', f);
 	    },
-
+	
 	    bezier : function(mX1, mY1, mX2, mY2) {
 	        this.setCoreTransformation(BezierEasing(mX1, mY1, mX2, mY2));
 	        return this;
 	    },
-
+	
 	    ease : function() {
 	        this.setCoreTransformation(BezierEasing.css.ease);
 	        return this;
@@ -228,28 +229,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.setCoreTransformation(BezierEasing.css['ease-in-out']);
 	        return this;
 	    },
-
+	
 	    // ----------------------------------------------------------------------
 	    // 
 	    _setTransformation : function(key, f) {
-	        var transform = this[key];
-	        if (transform) {
-	            this[key] = function(val) {
-	                return f.apply(this, [ val, transform ]);
-	            };
-	        } else {
-	            this[key] = f;
-	        }
+	        this[key] = f;
 	        return this;
 	    },
-
+	
 	    _wrapTransformation : function(key, f) {
-	        return this._setTransformation(key, function(val, transform) {
-	            val = transform ? transform.call(this, val) : val;
-	            return f.call(this, val);
-	        });
+	        var transform = this[key];
+	        if (transform) {
+	            return this._setTransformation(key, function(val) {
+	                val = transform.call(this, val);
+	                return f.call(this, val);
+	            });
+	        } else {
+	            return this._setTransformation(f);
+	        }
 	    }
-
+	
 	};
 
 
@@ -259,9 +258,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var ValueGenerator = __webpack_require__(1);
 	var Color = __webpack_require__(3);
-
+	
 	module.exports = StylesGenerator;
-
+	
 	function StylesGenerator(obj) {
 	    if (obj) {
 	        ValueGenerator.copy(this, obj);
@@ -292,6 +291,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._buildAttr();
 	        this._attr = name;
 	        return this;
+	    },
+	    mix : function(from, to) {
+	        return this.range(0, 1, function(val) {
+	            return from.mix(to, val);
+	        });
 	    },
 	    color : function(from, to) {
 	        return this.range(0, 1, function(val) {
@@ -333,7 +337,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = Color;
-
+	
 	/**
 	 * Most of methods for this class are copied from the following classes of the
 	 * less.js library (MIT license): tree.Color,
@@ -356,17 +360,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	}
-
+	
 	Color.prototype = {
-
+	
 	    /** Creates a clone of this instance. */
 	    clone : function() {
 	        return Color.color(this.rgba);
 	    },
-
+	
 	    // -----------------------------------------------------------------------
 	    // Parsing / loading from other formats
-
+	
 	    /**
 	     * Parses the specified hexadecimal color and sets internal fields in this
 	     * object.
@@ -391,7 +395,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.rgba[1] = g;
 	        this.rgba[2] = b;
 	    },
-
+	
 	    /** Copies from HSLA format */
 	    fromHSL : function(h, s, l, a) {
 	        if (typeof h === 'object') {
@@ -422,13 +426,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.rgba[1] = Math.round(hue(h) * 255);
 	        this.rgba[2] = Math.round(hue(h - 1 / 3) * 255);
 	        this.rgba[3] = a;
-
+	
 	        return this;
 	    },
-
+	
 	    // -----------------------------------------------------------------------
 	    // Color transformations
-
+	
 	    /**
 	     * Returns a saturated color
 	     * 
@@ -519,7 +523,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        hsl.h = hue < 0 ? 360 + hue : hue;
 	        return Color.fromHSL(hsl);
 	    },
-
+	
 	    /**
 	     * Mixes this color with the specified one and returns a resulting color
 	     * 
@@ -561,32 +565,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return dark;
 	        }
 	    },
-
+	
+	    // -----------------------------------------------------------------------
+	
+	    /**
+	     * Returns a "style" representation of this object. This method used for
+	     * style generation.
+	     */
+	    toStyle : function() {
+	        return this.toHex();
+	    },
+	
 	    // -----------------------------------------------------------------------
 	    // Formatting
-
+	
 	    /** Returns a string representation of this object */
 	    toString : function() {
 	        return this.toHex();
 	    },
-
+	
 	    /** Formats this object as RGBA string - rgba(red,green,blue,alpha) */
 	    toRGBA : function() {
 	        return 'rgba(' + this.rgba[0] + ',' + this.rgba[1] + ',' + this.rgba[2]
 	                + ',' + this.rgba[3] + ')';
 	    },
-
+	
 	    /** Formats this object as a RGB string - rgb(red,green,blue) */
 	    toRGB : function() {
 	        return 'rgba(' + this.rgba[0] + ',' + this.rgba[1] + ',' + this.rgba[2]
 	                + ')';
 	    },
-
+	
 	    /** Formats this object as a hexadecimal RGB string #rrggbb */
 	    toHex : function() {
 	        return Color.toHex([ this.rgba[0], this.rgba[1], this.rgba[2] ]);
 	    },
-
+	
 	    /** http://en.wikipedia.org/wiki/Luma_(video) */
 	    luma : function() {
 	        var r = this.rgba[0] / 255, g = this.rgba[1] / 255, b = this.rgba[2] / 255;
@@ -595,18 +609,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	        b = (b <= 0.03928) ? b / 12.92 : Math.pow(((b + 0.055) / 1.055), 2.4);
 	        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 	    },
-
+	
 	    toHSL : function() {
 	        var r = this.rgba[0] / 255, g = this.rgba[1] / 255, b = this.rgba[2] / 255, a = this.rgba[3];
-
+	
 	        var max = Math.max(r, g, b), min = Math.min(r, g, b);
 	        var h, s, l = (max + min) / 2, d = max - min;
-
+	
 	        if (max === min) {
 	            h = s = 0;
 	        } else {
 	            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-
+	
 	            switch (max) {
 	            case r:
 	                h = (g - b) / d + (g < b ? 6 : 0);
@@ -627,22 +641,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	            a : a
 	        };
 	    },
-
+	
 	    // Adapted from
 	    // http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
 	    toHSV : function() {
 	        var r = this.rgba[0] / 255, g = this.rgba[1] / 255, b = this.rgba[2] / 255, a = this.rgba[3];
-
+	
 	        var max = Math.max(r, g, b), min = Math.min(r, g, b);
 	        var h, s, v = max;
-
+	
 	        var d = max - min;
 	        if (max === 0) {
 	            s = 0;
 	        } else {
 	            s = d / max;
 	        }
-
+	
 	        if (max === min) {
 	            h = 0;
 	        } else {
@@ -666,15 +680,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            a : a
 	        };
 	    },
-
+	
 	    toARGB : function() {
 	        return Color.toHex([ this.rgba[3], this.rgba[0], this.rgba[1],
 	                this.rgba[2] ]);
 	    },
-
+	
 	    // -----------------------------------------------------------------------
 	    // Private methods
-
+	
 	    compare : function(x) {
 	        if (!x.rgba) {
 	            return -1;
@@ -683,21 +697,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	                && x.rgba[2] === this.rgba[2] && x.rgba[3] === this.rgba[3]) ? 0
 	                : -1;
 	    },
-
+	
 	    /** Resets fields of this object - all channels to 0 and alpha channel to 1. */
 	    _reset : function() {
 	        this.rgba = [ 0, 0, 0, 1 ];
 	    },
-
+	
 	};
-
+	
 	Color.color = function(color) {
 	    if (color instanceof Color) {
 	        return color;
 	    }
 	    return new Color(color);
 	}
-
+	
 	// Copyright (c) 2006-2009 Hampton Catlin, Nathan Weizenbaum, and Chris
 	// Eppstein http://sass-lang.com
 	Color.mix = function(first, second, weight) {
@@ -720,10 +734,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	// -----------------------------------------------------------------------
 	// Color blending
-
+	
 	// Taken with modifications from less.js (MIT):
 	// https://github.com/less/less.js/blob/master/lib/less/functions.js
-
+	
 	// Color Blending
 	// ref: http://www.w3.org/TR/compositing-1
 	function colorBlend(mode) {
@@ -734,7 +748,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var as = second.rgba[3];
 	        var ar = as + ab * (1 - as);
 	        var rgba = [ 0, 0, 0, ar ]; // result
-
+	
 	        var cb, cs, cr;
 	        for (var i = 0; i < 3; i++) {
 	            cb = first.rgba[i] / 255;
@@ -777,9 +791,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    exclusion : function(cb, cs) {
 	        return cb + cs - 2 * cb * cs;
 	    },
-
+	
 	    // non-w3c functions:
-
+	
 	    // gives the same results as mix(first, second, 0.5)
 	    average : function(cb, cs) {
 	        return (cb + cs) / 2;
@@ -788,7 +802,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return 1 - Math.abs(cb + cs - 1);
 	    }
 	};
-
+	
 	Color.blend = {};
 	function protoColorBlend(f) {
 	    return function(color) {
@@ -801,11 +815,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        Color.prototype[f] = protoColorBlend(f);
 	    }
 	}
-
+	
 	Color.fromHSL = function(h, s, l, a) {
 	    return Color.color('').fromHSL(h, s, l, a);
 	}
-
+	
 	Color.toHex = function toHex(v) {
 	    return '#' + v.map(function(c) {
 	        c = Math.min(Math.max(c, 0), 255);
@@ -813,7 +827,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }).join('');
 	}
 	// -----------------------------------------------------------------------
-
+	
 	function number(n) {
 	    if (typeof (n) === 'number') {
 	        return n;
@@ -824,7 +838,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	    }
 	}
-
+	
 	function clamp(val) {
 	    return Math.min(1, Math.max(0, val));
 	}
@@ -835,168 +849,173 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copy/paste from less.js (MIT license)
+	var Color = __webpack_require__(3);
+	function color(code) {
+	    return new Color(code);
+	}
 	module.exports = {
-	    'aliceblue' : '#f0f8ff',
-	    'antiquewhite' : '#faebd7',
-	    'aqua' : '#00ffff',
-	    'aquamarine' : '#7fffd4',
-	    'azure' : '#f0ffff',
-	    'beige' : '#f5f5dc',
-	    'bisque' : '#ffe4c4',
-	    'black' : '#000000',
-	    'blanchedalmond' : '#ffebcd',
-	    'blue' : '#0000ff',
-	    'blueviolet' : '#8a2be2',
-	    'brown' : '#a52a2a',
-	    'burlywood' : '#deb887',
-	    'cadetblue' : '#5f9ea0',
-	    'chartreuse' : '#7fff00',
-	    'chocolate' : '#d2691e',
-	    'coral' : '#ff7f50',
-	    'cornflowerblue' : '#6495ed',
-	    'cornsilk' : '#fff8dc',
-	    'crimson' : '#dc143c',
-	    'cyan' : '#00ffff',
-	    'darkblue' : '#00008b',
-	    'darkcyan' : '#008b8b',
-	    'darkgoldenrod' : '#b8860b',
-	    'darkgray' : '#a9a9a9',
-	    'darkgrey' : '#a9a9a9',
-	    'darkgreen' : '#006400',
-	    'darkkhaki' : '#bdb76b',
-	    'darkmagenta' : '#8b008b',
-	    'darkolivegreen' : '#556b2f',
-	    'darkorange' : '#ff8c00',
-	    'darkorchid' : '#9932cc',
-	    'darkred' : '#8b0000',
-	    'darksalmon' : '#e9967a',
-	    'darkseagreen' : '#8fbc8f',
-	    'darkslateblue' : '#483d8b',
-	    'darkslategray' : '#2f4f4f',
-	    'darkslategrey' : '#2f4f4f',
-	    'darkturquoise' : '#00ced1',
-	    'darkviolet' : '#9400d3',
-	    'deeppink' : '#ff1493',
-	    'deepskyblue' : '#00bfff',
-	    'dimgray' : '#696969',
-	    'dimgrey' : '#696969',
-	    'dodgerblue' : '#1e90ff',
-	    'firebrick' : '#b22222',
-	    'floralwhite' : '#fffaf0',
-	    'forestgreen' : '#228b22',
-	    'fuchsia' : '#ff00ff',
-	    'gainsboro' : '#dcdcdc',
-	    'ghostwhite' : '#f8f8ff',
-	    'gold' : '#ffd700',
-	    'goldenrod' : '#daa520',
-	    'gray' : '#808080',
-	    'grey' : '#808080',
-	    'green' : '#008000',
-	    'greenyellow' : '#adff2f',
-	    'honeydew' : '#f0fff0',
-	    'hotpink' : '#ff69b4',
-	    'indianred' : '#cd5c5c',
-	    'indigo' : '#4b0082',
-	    'ivory' : '#fffff0',
-	    'khaki' : '#f0e68c',
-	    'lavender' : '#e6e6fa',
-	    'lavenderblush' : '#fff0f5',
-	    'lawngreen' : '#7cfc00',
-	    'lemonchiffon' : '#fffacd',
-	    'lightblue' : '#add8e6',
-	    'lightcoral' : '#f08080',
-	    'lightcyan' : '#e0ffff',
-	    'lightgoldenrodyellow' : '#fafad2',
-	    'lightgray' : '#d3d3d3',
-	    'lightgrey' : '#d3d3d3',
-	    'lightgreen' : '#90ee90',
-	    'lightpink' : '#ffb6c1',
-	    'lightsalmon' : '#ffa07a',
-	    'lightseagreen' : '#20b2aa',
-	    'lightskyblue' : '#87cefa',
-	    'lightslategray' : '#778899',
-	    'lightslategrey' : '#778899',
-	    'lightsteelblue' : '#b0c4de',
-	    'lightyellow' : '#ffffe0',
-	    'lime' : '#00ff00',
-	    'limegreen' : '#32cd32',
-	    'linen' : '#faf0e6',
-	    'magenta' : '#ff00ff',
-	    'maroon' : '#800000',
-	    'mediumaquamarine' : '#66cdaa',
-	    'mediumblue' : '#0000cd',
-	    'mediumorchid' : '#ba55d3',
-	    'mediumpurple' : '#9370d8',
-	    'mediumseagreen' : '#3cb371',
-	    'mediumslateblue' : '#7b68ee',
-	    'mediumspringgreen' : '#00fa9a',
-	    'mediumturquoise' : '#48d1cc',
-	    'mediumvioletred' : '#c71585',
-	    'midnightblue' : '#191970',
-	    'mintcream' : '#f5fffa',
-	    'mistyrose' : '#ffe4e1',
-	    'moccasin' : '#ffe4b5',
-	    'navajowhite' : '#ffdead',
-	    'navy' : '#000080',
-	    'oldlace' : '#fdf5e6',
-	    'olive' : '#808000',
-	    'olivedrab' : '#6b8e23',
-	    'orange' : '#ffa500',
-	    'orangered' : '#ff4500',
-	    'orchid' : '#da70d6',
-	    'palegoldenrod' : '#eee8aa',
-	    'palegreen' : '#98fb98',
-	    'paleturquoise' : '#afeeee',
-	    'palevioletred' : '#d87093',
-	    'papayawhip' : '#ffefd5',
-	    'peachpuff' : '#ffdab9',
-	    'peru' : '#cd853f',
-	    'pink' : '#ffc0cb',
-	    'plum' : '#dda0dd',
-	    'powderblue' : '#b0e0e6',
-	    'purple' : '#800080',
-	    'red' : '#ff0000',
-	    'rosybrown' : '#bc8f8f',
-	    'royalblue' : '#4169e1',
-	    'saddlebrown' : '#8b4513',
-	    'salmon' : '#fa8072',
-	    'sandybrown' : '#f4a460',
-	    'seagreen' : '#2e8b57',
-	    'seashell' : '#fff5ee',
-	    'sienna' : '#a0522d',
-	    'silver' : '#c0c0c0',
-	    'skyblue' : '#87ceeb',
-	    'slateblue' : '#6a5acd',
-	    'slategray' : '#708090',
-	    'slategrey' : '#708090',
-	    'snow' : '#fffafa',
-	    'springgreen' : '#00ff7f',
-	    'steelblue' : '#4682b4',
-	    'tan' : '#d2b48c',
-	    'teal' : '#008080',
-	    'thistle' : '#d8bfd8',
-	    'tomato' : '#ff6347',
-	    'turquoise' : '#40e0d0',
-	    'violet' : '#ee82ee',
-	    'wheat' : '#f5deb3',
-	    'white' : '#ffffff',
-	    'whitesmoke' : '#f5f5f5',
-	    'yellow' : '#ffff00',
-	    'yellowgreen' : '#9acd32'
+	    'aliceblue' : color('#f0f8ff'),
+	    'antiquewhite' : color('#faebd7'),
+	    'aqua' : color('#00ffff'),
+	    'aquamarine' : color('#7fffd4'),
+	    'azure' : color('#f0ffff'),
+	    'beige' : color('#f5f5dc'),
+	    'bisque' : color('#ffe4c4'),
+	    'black' : color('#000000'),
+	    'blanchedalmond' : color('#ffebcd'),
+	    'blue' : color('#0000ff'),
+	    'blueviolet' : color('#8a2be2'),
+	    'brown' : color('#a52a2a'),
+	    'burlywood' : color('#deb887'),
+	    'cadetblue' : color('#5f9ea0'),
+	    'chartreuse' : color('#7fff00'),
+	    'chocolate' : color('#d2691e'),
+	    'coral' : color('#ff7f50'),
+	    'cornflowerblue' : color('#6495ed'),
+	    'cornsilk' : color('#fff8dc'),
+	    'crimson' : color('#dc143c'),
+	    'cyan' : color('#00ffff'),
+	    'darkblue' : color('#00008b'),
+	    'darkcyan' : color('#008b8b'),
+	    'darkgoldenrod' : color('#b8860b'),
+	    'darkgray' : color('#a9a9a9'),
+	    'darkgrey' : color('#a9a9a9'),
+	    'darkgreen' : color('#006400'),
+	    'darkkhaki' : color('#bdb76b'),
+	    'darkmagenta' : color('#8b008b'),
+	    'darkolivegreen' : color('#556b2f'),
+	    'darkorange' : color('#ff8c00'),
+	    'darkorchid' : color('#9932cc'),
+	    'darkred' : color('#8b0000'),
+	    'darksalmon' : color('#e9967a'),
+	    'darkseagreen' : color('#8fbc8f'),
+	    'darkslateblue' : color('#483d8b'),
+	    'darkslategray' : color('#2f4f4f'),
+	    'darkslategrey' : color('#2f4f4f'),
+	    'darkturquoise' : color('#00ced1'),
+	    'darkviolet' : color('#9400d3'),
+	    'deeppink' : color('#ff1493'),
+	    'deepskyblue' : color('#00bfff'),
+	    'dimgray' : color('#696969'),
+	    'dimgrey' : color('#696969'),
+	    'dodgerblue' : color('#1e90ff'),
+	    'firebrick' : color('#b22222'),
+	    'floralwhite' : color('#fffaf0'),
+	    'forestgreen' : color('#228b22'),
+	    'fuchsia' : color('#ff00ff'),
+	    'gainsboro' : color('#dcdcdc'),
+	    'ghostwhite' : color('#f8f8ff'),
+	    'gold' : color('#ffd700'),
+	    'goldenrod' : color('#daa520'),
+	    'gray' : color('#808080'),
+	    'grey' : color('#808080'),
+	    'green' : color('#008000'),
+	    'greenyellow' : color('#adff2f'),
+	    'honeydew' : color('#f0fff0'),
+	    'hotpink' : color('#ff69b4'),
+	    'indianred' : color('#cd5c5c'),
+	    'indigo' : color('#4b0082'),
+	    'ivory' : color('#fffff0'),
+	    'khaki' : color('#f0e68c'),
+	    'lavender' : color('#e6e6fa'),
+	    'lavenderblush' : color('#fff0f5'),
+	    'lawngreen' : color('#7cfc00'),
+	    'lemonchiffon' : color('#fffacd'),
+	    'lightblue' : color('#add8e6'),
+	    'lightcoral' : color('#f08080'),
+	    'lightcyan' : color('#e0ffff'),
+	    'lightgoldenrodyellow' : color('#fafad2'),
+	    'lightgray' : color('#d3d3d3'),
+	    'lightgrey' : color('#d3d3d3'),
+	    'lightgreen' : color('#90ee90'),
+	    'lightpink' : color('#ffb6c1'),
+	    'lightsalmon' : color('#ffa07a'),
+	    'lightseagreen' : color('#20b2aa'),
+	    'lightskyblue' : color('#87cefa'),
+	    'lightslategray' : color('#778899'),
+	    'lightslategrey' : color('#778899'),
+	    'lightsteelblue' : color('#b0c4de'),
+	    'lightyellow' : color('#ffffe0'),
+	    'lime' : color('#00ff00'),
+	    'limegreen' : color('#32cd32'),
+	    'linen' : color('#faf0e6'),
+	    'magenta' : color('#ff00ff'),
+	    'maroon' : color('#800000'),
+	    'mediumaquamarine' : color('#66cdaa'),
+	    'mediumblue' : color('#0000cd'),
+	    'mediumorchid' : color('#ba55d3'),
+	    'mediumpurple' : color('#9370d8'),
+	    'mediumseagreen' : color('#3cb371'),
+	    'mediumslateblue' : color('#7b68ee'),
+	    'mediumspringgreen' : color('#00fa9a'),
+	    'mediumturquoise' : color('#48d1cc'),
+	    'mediumvioletred' : color('#c71585'),
+	    'midnightblue' : color('#191970'),
+	    'mintcream' : color('#f5fffa'),
+	    'mistyrose' : color('#ffe4e1'),
+	    'moccasin' : color('#ffe4b5'),
+	    'navajowhite' : color('#ffdead'),
+	    'navy' : color('#000080'),
+	    'oldlace' : color('#fdf5e6'),
+	    'olive' : color('#808000'),
+	    'olivedrab' : color('#6b8e23'),
+	    'orange' : color('#ffa500'),
+	    'orangered' : color('#ff4500'),
+	    'orchid' : color('#da70d6'),
+	    'palegoldenrod' : color('#eee8aa'),
+	    'palegreen' : color('#98fb98'),
+	    'paleturquoise' : color('#afeeee'),
+	    'palevioletred' : color('#d87093'),
+	    'papayawhip' : color('#ffefd5'),
+	    'peachpuff' : color('#ffdab9'),
+	    'peru' : color('#cd853f'),
+	    'pink' : color('#ffc0cb'),
+	    'plum' : color('#dda0dd'),
+	    'powderblue' : color('#b0e0e6'),
+	    'purple' : color('#800080'),
+	    'red' : color('#ff0000'),
+	    'rosybrown' : color('#bc8f8f'),
+	    'royalblue' : color('#4169e1'),
+	    'saddlebrown' : color('#8b4513'),
+	    'salmon' : color('#fa8072'),
+	    'sandybrown' : color('#f4a460'),
+	    'seagreen' : color('#2e8b57'),
+	    'seashell' : color('#fff5ee'),
+	    'sienna' : color('#a0522d'),
+	    'silver' : color('#c0c0c0'),
+	    'skyblue' : color('#87ceeb'),
+	    'slateblue' : color('#6a5acd'),
+	    'slategray' : color('#708090'),
+	    'slategrey' : color('#708090'),
+	    'snow' : color('#fffafa'),
+	    'springgreen' : color('#00ff7f'),
+	    'steelblue' : color('#4682b4'),
+	    'tan' : color('#d2b48c'),
+	    'teal' : color('#008080'),
+	    'thistle' : color('#d8bfd8'),
+	    'tomato' : color('#ff6347'),
+	    'turquoise' : color('#40e0d0'),
+	    'violet' : color('#ee82ee'),
+	    'wheat' : color('#f5deb3'),
+	    'white' : color('#ffffff'),
+	    'whitesmoke' : color('#f5f5f5'),
+	    'yellow' : color('#ffff00'),
+	    'yellowgreen' : color('#9acd32')
 	};
+
 
 /***/ },
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = LessSerializer;
-
+	
 	/** Serializes a hierarchy of style objects to a Less-like style string. */
 	function LessSerializer() {
 	}
-
+	
 	LessSerializer.prototype = {
-
+	
 	    serialize : function(css) {
 	        var result = '';
 	        for ( var key in css) {
@@ -1006,7 +1025,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return result;
 	    },
-
+	
 	    _serializeValues : function(shift, prefix, css) {
 	        if (!prefix)
 	            prefix = '';
@@ -1024,7 +1043,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return result;
 	    },
-
+	
 	    _serializeStyle : function(name, css) {
 	        var result = '';
 	        if (typeof css === 'string') {
@@ -1043,6 +1062,89 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var BezierEasing = __webpack_require__(7);
+	var ValueGenerator = __webpack_require__(1);
+	
+	module.exports = RangeGenerator;
+	
+	function RangeGenerator(obj) {
+	    this._template = this._preprocess(obj);
+	}
+	RangeGenerator.prototype._preprocess = function preprocess(obj) {
+	    var result = {};
+	    for ( var key in obj) {
+	        (function(key) {
+	            var val = obj[key];
+	            var r;
+	            if (Array.isArray(val)) {
+	                var from = val[0];
+	                var to = val[1];
+	                var method = val[2] || 'linear';
+	                var generator = new ValueGenerator().trim(true, true);
+	                if (typeof method === 'string') {
+	                    method = BezierEasing.css[method];
+	                    if (method) {
+	                        generator.setCoreTransformation(method);
+	                    }
+	                }
+	                if (typeof from === 'object') {
+	                    generator.range(0, 1, function(val) {
+	                        return from.mix(to, val);
+	                    });
+	                } else if (typeof from === 'function') {
+	                    generator.range(0, 1, function(val) {
+	                        return from(to, val);
+	                    });
+	                } else {
+	                    generator.range(from, to);
+	                }
+	                r = generator.build();
+	            } else if (typeof val === 'object') {
+	                r = preprocess.call(this, val);
+	            } else {
+	                r = val;
+	            }
+	            if (r !== undefined) {
+	                result[key] = r;
+	            }
+	        }).call(this, key);
+	    }
+	    return result;
+	}
+	
+	RangeGenerator.prototype.generate = function() {
+	    var args = [];
+	    for (var i = 0; i < arguments.length; i++) {
+	        args.push(arguments[i]);
+	    }
+	    function generate(obj) {
+	        var result = {};
+	        for ( var key in obj) {
+	            var value = obj[key];
+	            if (typeof value === 'object') {
+	                value = generate.call(this, value);
+	            } else if (typeof value === 'function') {
+	                var val = value.apply(this, args);
+	                if (typeof val === 'object'
+	                        && typeof val.toStyle === 'function') {
+	                    val = val.toStyle();
+	                }
+	                value = val;
+	            }
+	            if (value !== undefined) {
+	                result[key] = value;
+	            }
+	        }
+	        return result;
+	    }
+	    return generate.call(this, this._template);
+	}
+
+
+/***/ },
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1065,18 +1167,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}(function () {
 	  var global = this;
-
+	
 	  // These values are established by empiricism with tests (tradeoff: performance VS precision)
 	  var NEWTON_ITERATIONS = 4;
 	  var NEWTON_MIN_SLOPE = 0.001;
 	  var SUBDIVISION_PRECISION = 0.0000001;
 	  var SUBDIVISION_MAX_ITERATIONS = 10;
-
+	
 	  var kSplineTableSize = 11;
 	  var kSampleStepSize = 1.0 / (kSplineTableSize - 1.0);
-
+	
 	  var float32ArraySupported = 'Float32Array' in global;
-
+	
+	  function A (aA1, aA2) { return 1.0 - 3.0 * aA2 + 3.0 * aA1; }
+	  function B (aA1, aA2) { return 3.0 * aA2 - 6.0 * aA1; }
+	  function C (aA1)      { return 3.0 * aA1; }
+	
+	  // Returns x(t) given t, x1, and x2, or y(t) given t, y1, and y2.
+	  function calcBezier (aT, aA1, aA2) {
+	    return ((A(aA1, aA2)*aT + B(aA1, aA2))*aT + C(aA1))*aT;
+	  }
+	
+	  // Returns dx/dt given t, x1, and x2, or dy/dt given t, y1, and y2.
+	  function getSlope (aT, aA1, aA2) {
+	    return 3.0 * A(aA1, aA2)*aT*aT + 2.0 * B(aA1, aA2) * aT + C(aA1);
+	  }
+	
+	  function binarySubdivide (aX, aA, aB, mX1, mX2) {
+	    var currentX, currentT, i = 0;
+	    do {
+	      currentT = aA + (aB - aA) / 2.0;
+	      currentX = calcBezier(currentT, mX1, mX2) - aX;
+	      if (currentX > 0.0) {
+	        aB = currentT;
+	      } else {
+	        aA = currentT;
+	      }
+	    } while (Math.abs(currentX) > SUBDIVISION_PRECISION && ++i < SUBDIVISION_MAX_ITERATIONS);
+	    return currentT;
+	  }
+	
 	  function BezierEasing (mX1, mY1, mX2, mY2) {
 	    // Validate arguments
 	    if (arguments.length !== 4) {
@@ -1085,28 +1215,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var i=0; i<4; ++i) {
 	      if (typeof arguments[i] !== "number" || isNaN(arguments[i]) || !isFinite(arguments[i])) {
 	        throw new Error("BezierEasing arguments should be integers.");
-	      } 
+	      }
 	    }
 	    if (mX1 < 0 || mX1 > 1 || mX2 < 0 || mX2 > 1) {
 	      throw new Error("BezierEasing x values must be in [0, 1] range.");
 	    }
-
+	
 	    var mSampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
-	   
-	    function A (aA1, aA2) { return 1.0 - 3.0 * aA2 + 3.0 * aA1; }
-	    function B (aA1, aA2) { return 3.0 * aA2 - 6.0 * aA1; }
-	    function C (aA1)      { return 3.0 * aA1; }
-	   
-	    // Returns x(t) given t, x1, and x2, or y(t) given t, y1, and y2.
-	    function calcBezier (aT, aA1, aA2) {
-	      return ((A(aA1, aA2)*aT + B(aA1, aA2))*aT + C(aA1))*aT;
-	    }
-	   
-	    // Returns dx/dt given t, x1, and x2, or dy/dt given t, y1, and y2.
-	    function getSlope (aT, aA1, aA2) {
-	      return 3.0 * A(aA1, aA2)*aT*aT + 2.0 * B(aA1, aA2) * aT + C(aA1);
-	    }
-
+	
 	    function newtonRaphsonIterate (aX, aGuessT) {
 	      for (var i = 0; i < NEWTON_ITERATIONS; ++i) {
 	        var currentSlope = getSlope(aGuessT, mX1, mX2);
@@ -1116,58 +1232,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	      return aGuessT;
 	    }
-
+	
 	    function calcSampleValues () {
 	      for (var i = 0; i < kSplineTableSize; ++i) {
 	        mSampleValues[i] = calcBezier(i * kSampleStepSize, mX1, mX2);
 	      }
 	    }
-
-	    function binarySubdivide (aX, aA, aB) {
-	      var currentX, currentT, i = 0;
-	      do {
-	        currentT = aA + (aB - aA) / 2.0;
-	        currentX = calcBezier(currentT, mX1, mX2) - aX;
-	        if (currentX > 0.0) {
-	          aB = currentT;
-	        } else {
-	          aA = currentT;
-	        }
-	      } while (Math.abs(currentX) > SUBDIVISION_PRECISION && ++i < SUBDIVISION_MAX_ITERATIONS);
-	      return currentT;
-	    }
-
+	
 	    function getTForX (aX) {
 	      var intervalStart = 0.0;
 	      var currentSample = 1;
 	      var lastSample = kSplineTableSize - 1;
-
+	
 	      for (; currentSample != lastSample && mSampleValues[currentSample] <= aX; ++currentSample) {
 	        intervalStart += kSampleStepSize;
 	      }
 	      --currentSample;
-
+	
 	      // Interpolate to provide an initial guess for t
 	      var dist = (aX - mSampleValues[currentSample]) / (mSampleValues[currentSample+1] - mSampleValues[currentSample]);
 	      var guessForT = intervalStart + dist * kSampleStepSize;
-
+	
 	      var initialSlope = getSlope(guessForT, mX1, mX2);
 	      if (initialSlope >= NEWTON_MIN_SLOPE) {
 	        return newtonRaphsonIterate(aX, guessForT);
 	      } else if (initialSlope === 0.0) {
 	        return guessForT;
 	      } else {
-	        return binarySubdivide(aX, intervalStart, intervalStart + kSampleStepSize);
+	        return binarySubdivide(aX, intervalStart, intervalStart + kSampleStepSize, mX1, mX2);
 	      }
 	    }
-
+	
 	    var _precomputed = false;
 	    function precompute() {
 	      _precomputed = true;
 	      if (mX1 != mY1 || mX2 != mY2)
 	        calcSampleValues();
 	    }
-
+	
 	    var f = function (aX) {
 	      if (!_precomputed) precompute();
 	      if (mX1 === mY1 && mX2 === mY2) return aX; // linear
@@ -1176,19 +1278,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (aX === 1) return 1;
 	      return calcBezier(getTForX(aX), mY1, mY2);
 	    };
-
+	
 	    f.getControlPoints = function() { return [{ x: mX1, y: mY1 }, { x: mX2, y: mY2 }]; };
-
+	
 	    var args = [mX1, mY1, mX2, mY2];
 	    var str = "BezierEasing("+args+")";
 	    f.toString = function () { return str; };
-
+	
 	    var css = "cubic-bezier("+args+")";
 	    f.toCSS = function () { return css; };
-
+	
 	    return f;
 	  }
-
+	
 	  // CSS mapping
 	  BezierEasing.css = {
 	    "ease":        BezierEasing(0.25, 0.1, 0.25, 1.0),
@@ -1197,12 +1299,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    "ease-out":    BezierEasing(0.00, 0.0, 0.58, 1.0),
 	    "ease-in-out": BezierEasing(0.42, 0.0, 0.58, 1.0)
 	  };
-
+	
 	  return BezierEasing;
-
+	
 	}));
 
 
 /***/ }
 /******/ ])
 });
+;
+//# sourceMappingURL=mosaic-styles.js.map

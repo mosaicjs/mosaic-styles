@@ -6,14 +6,6 @@ var LessSerializer = styles.LessSerializer;
 var RangeGenerator = styles.RangeGenerator;
 var Colors = styles.Colors;
 
-function Value(val) {
-    this.val = val;
-}
-Value.prototype.mix = function(obj, weight) {
-    var val = obj ? obj.val : 0;
-    this.val += val * weight;
-}
-
 describe('RangeGenerator', function() {
     it('should build range-dependent styles', function() {
         var range = new RangeGenerator({
