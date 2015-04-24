@@ -229,6 +229,16 @@ Color.prototype = {
     },
 
     // -----------------------------------------------------------------------
+
+    /**
+     * Returns a "style" representation of this object. This method used for
+     * style generation.
+     */
+    toStyle : function() {
+        return this.toHex();
+    },
+
+    // -----------------------------------------------------------------------
     // Formatting
 
     /** Returns a string representation of this object */

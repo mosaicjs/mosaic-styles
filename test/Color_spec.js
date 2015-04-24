@@ -17,22 +17,22 @@ describe('Color', function() {
         testColor('#eeeeee', 238, 238, 238, 1);
         testColor('#EeE', 238, 238, 238, 1, '#eeeeee');
         testColor('#EeEeeE', 238, 238, 238, 1, '#eeeeee');
-        testColor(styles.Colors.red, 255, 0, 0, 1);
-        testColor(styles.Colors.lime, 0, 255, 0, 1);
-        testColor(styles.Colors.green, 0, 128, 0, 1);
-        testColor(styles.Colors.blue, 0, 0, 255, 1);
-        testColor(styles.Colors.yellow, 255, 255, 0, 1);
+        testColor(styles.Colors.red + '', 255, 0, 0, 1);
+        testColor(styles.Colors.lime + '', 0, 255, 0, 1);
+        testColor(styles.Colors.green + '', 0, 128, 0, 1);
+        testColor(styles.Colors.blue + '', 0, 0, 255, 1);
+        testColor(styles.Colors.yellow + '', 255, 255, 0, 1);
     });
     it('should parse and re-format all pre-defined colors', function() {
         for ( var key in styles.Colors) {
-            var str = styles.Colors[key];
+            var str = styles.Colors[key] + '';
             var color = new styles.Color(str);
             expect(color.toHex()).to.eql(str);
         }
     });
     it('should serialize / load data to / from HSLA format', function() {
         for ( var key in styles.Colors) {
-            var str = styles.Colors[key];
+            var str = styles.Colors[key] + '';
             var color = new styles.Color(str);
             var hsla = color.toHSL();
             var test = new styles.Color();
@@ -46,22 +46,8 @@ describe('Color', function() {
                     var a = new styles.Color(first);
                     var b = new styles.Color(second);
                     var test = a.mix(b, weight);
-                    expect(test.toHex()).to.eql(control);
-                }
-                testMix(styles.Colors.red, styles.Colors.lime, 0.5,
-                        styles.Colors.olive);
-                testMix(styles.Colors.red, styles.Colors.lime, 0,
-                        styles.Colors.red);
-                testMix(styles.Colors.red, styles.Colors.lime, 1,
-                        styles.Colors.lime);
-            });
-    it('should be able to mix two colors in the specified proportion',
-            function() {
-                function testMix(first, second, weight, control) {
-                    var a = new styles.Color(first);
-                    var b = new styles.Color(second);
-                    var test = a.mix(b, weight);
-                    expect(test.toHex()).to.eql(control);
+                    expect(test.rgba).to.eql(control.rgba);
+                    expect(test.toHex()).to.eql(control.toHex());
                 }
                 testMix(styles.Colors.red, styles.Colors.lime, 0.5,
                         styles.Colors.olive);

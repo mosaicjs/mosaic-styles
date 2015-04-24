@@ -34,6 +34,11 @@ ValueGenerator.copy(StylesGenerator.prototype, {
         this._attr = name;
         return this;
     },
+    mix : function(from, to) {
+        return this.range(0, 1, function(val) {
+            return from.mix(to, val);
+        });
+    },
     color : function(from, to) {
         return this.range(0, 1, function(val) {
             return Color.mix(from, to, val).toHex();

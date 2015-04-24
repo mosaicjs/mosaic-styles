@@ -3,5 +3,6 @@ module.exports = {
     StylesGenerator : require('./src/StylesGenerator'),
     Color : require('./src/Color'),
     Colors : require('./src/Colors'),
-    LessSerializer : require('./src/LessSerializer')
+    LessSerializer : require('./src/LessSerializer'),
+    RangeGenerator : require('./src/RangeGenerator')
 };

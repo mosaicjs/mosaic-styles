@@ -160,22 +160,20 @@ ValueGenerator.prototype = {
     // ----------------------------------------------------------------------
     // 
     _setTransformation : function(key, f) {
-        var transform = this[key];
-        if (transform) {
-            this[key] = function(val) {
-                return f.apply(this, [ val, transform ]);
-            };
-        } else {
-            this[key] = f;
-        }
+        this[key] = f;
         return this;
     },
 
     _wrapTransformation : function(key, f) {
-        return this._setTransformation(key, function(val, transform) {
-            val = transform ? transform.call(this, val) : val;
-            return f.call(this, val);
-        });
+        var transform = this[key];
+        if (transform) {
+            return this._setTransformation(key, function(val) {
+                val = transform.call(this, val);
+                return f.call(this, val);
+            });
+        } else {
+            return this._setTransformation(f);
+        }
     }
 
 };
