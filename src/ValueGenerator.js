@@ -40,6 +40,7 @@ ValueGenerator.prototype = {
         var that = this;
         return function(val, args) {
             // Domain transformation // domain value => [0..1] value
+            var before = val;
             val = that._domain(val, args);
             // Core transformation [0..1] => [0..1]
             if (val !== undefined) {

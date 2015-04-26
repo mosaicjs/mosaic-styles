@@ -10,29 +10,57 @@ describe('RangeGenerator', function() {
     it('should build range-dependent styles', function() {
         var range = new RangeGenerator({
             '[type="polygon"]' : {
-                'line-color' : [ Colors.red, Colors.blue, 'linear' ],
-                'line-width' : [ 0, 100, 'ease-in-out' ],
-                'line-opacity' : [ 0.1, 0.9 ],
+                'line-color' : [ Colors.red, Colors.blue, {
+                    trim : [ true, true ],
+                    method : 'linear'
+                } ],
+                'line-width' : [ {
+                    method : 'ease-in-out',
+                    range : function(val, options) {
+                        var zoom = Math.min(options.zoom, options.to);
+                        var minWidth = 0;
+                        var maxWidth = 100;
+                        var result = minWidth + val * (maxWidth - minWidth);
+                        var pow = Math.max(0, options.zoom - options.to);
+                        result *= Math.pow(2, pow);
+                        return isNaN(result) ? undefined : result;
+                    }
+                } ],
+                'line-opacity' : [ 0.1, 0.9, 'ease-in-out' ],
                 'text' : '"Hello, world!"',
                 'header' : {
                     'line-color' : [ Colors.yellow, Colors.green, 'linear' ],
-                    'test' : function(progress, zoom) {
+                    'test' : function(progress, options) {
                         return {
-                            zoom : zoom
+                            zoom : options.zoom
                         };
                     }
                 }
             }
         });
         var serializer = new LessSerializer();
-        var from = 1;
-        var to = 19;
+        var from = 5;
+        var to = 25;
         function test(val, control) {
             var progress = (val - from) / (to - from);
-            var res = range.generate(progress, val);
+            var res = range.generate(progress, {
+                zoom : val,
+                from : from,
+                to : to
+            });
             expect(res).to.eql(control);
             return res;
         }
+        test(from - 2, {
+            "[type=\"polygon\"]" : {
+                "text" : "\"Hello, world!\"",
+                "header" : {
+                    "test" : {
+                        "zoom" : from - 2
+                    }
+                }
+            }
+        });
         test(from, {
             "[type=\"polygon\"]" : {
                 "line-color" : "#ff0000",
@@ -42,7 +70,7 @@ describe('RangeGenerator', function() {
                 "header" : {
                     "line-color" : "#ffff00",
                     "test" : {
-                        "zoom" : 1
+                        "zoom" : from
                     }
                 }
             }
@@ -56,7 +84,7 @@ describe('RangeGenerator', function() {
                 "header" : {
                     "line-color" : "#80c000",
                     "test" : {
-                        "zoom" : 10
+                        "zoom" : (from + to) / 2
                     }
                 }
             }
@@ -70,7 +98,35 @@ describe('RangeGenerator', function() {
                 "header" : {
                     "line-color" : "#008000",
                     "test" : {
-                        "zoom" : 19
+                        "zoom" : to
+                    }
+                }
+            }
+        });
+        test(to + 1, {
+            "[type=\"polygon\"]" : {
+                // "line-color" : "#0000ff", // Line colors are clipped
+                "line-width" : 100 * 2,
+                "line-opacity" : 0.9,
+                "text" : "\"Hello, world!\"",
+                "header" : {
+                    "line-color" : "#008000",
+                    "test" : {
+                        "zoom" : to + 1
+                    }
+                }
+            }
+        });
+        test(to + 2, {
+            "[type=\"polygon\"]" : {
+                // "line-color" : "#0000ff", // Line colors are clipped
+                "line-width" : 100 * 4,
+                "line-opacity" : 0.9,
+                "text" : "\"Hello, world!\"",
+                "header" : {
+                    "line-color" : "#008000",
+                    "test" : {
+                        "zoom" : to + 2
                     }
                 }
             }
