@@ -28,8 +28,8 @@ describe('RangeGenerator', function() {
                         var progress = (Math.min(maxZoom, zoom) - minZoom) / //
                         (maxZoom - minZoom);
 
-                        var result = minWidth + progress
-                                * (maxWidth - minWidth);
+                        var result = minWidth + progress * //
+                        (maxWidth - minWidth);
                         var pow = Math.max(0, zoom - maxZoom);
                         result *= Math.pow(2, pow);
                         return isNaN(result) ? undefined : result;
