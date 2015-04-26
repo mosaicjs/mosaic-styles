@@ -1,5 +1,5 @@
 /*!
- * mosaic-styles v0.0.9 | License: MIT 
+ * mosaic-styles v0.0.10 | License: MIT 
  * 
  */
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -113,6 +113,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var that = this;
 	        return function(val, args) {
 	            // Domain transformation // domain value => [0..1] value
+	            var before = val;
 	            val = that._domain(val, args);
 	            // Core transformation [0..1] => [0..1]
 	            if (val !== undefined) {
@@ -1069,9 +1070,58 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	module.exports = RangeGenerator;
 	
+	RangeGenerator.value = function(from, to, options) {
+	    if (arguments.length === 1) {
+	        options = arguments[0];
+	    }
+	    options = options || {};
+	    if (typeof options === 'string') {
+	        options = {
+	            method : options
+	        };
+	    }
+	    options.method = options.method || 'linear';
+	    if (typeof options.method === 'string') {
+	        options.method = BezierEasing.css[options.method];
+	    }
+	    options.trim = options.trim || [ true, false ];
+	
+	    var generator = new ValueGenerator();
+	    generator.trim.apply(generator, options.trim);
+	
+	    if (typeof options.domain === 'function') {
+	        generator.setDomainTransformation(options.domain);
+	    } else if (Array.isArray(options.domain)) {
+	        generator.domain.apply(generator, options.domain);
+	    }
+	
+	    if (typeof options.method === 'function') {
+	        generator.setCoreTransformation.call(generator, options.method);
+	    }
+	    if (typeof from === 'object' && typeof from.mix === 'function') {
+	        generator.range(0, 1, function(val) {
+	            var result = from.mix(to, val);
+	            return result;
+	        });
+	    } else if (typeof from === 'function') {
+	        generator.range(0, 1, function(val) {
+	            return from(to, val);
+	        });
+	    } else if (typeof options.range === 'function') {
+	        generator.setRangeTransformation(options.range);
+	    } else {
+	        generator.range(from, to);
+	    }
+	    return generator.build();
+	}
+	
 	function RangeGenerator(obj) {
+	    this.init(obj);
+	}
+	RangeGenerator.prototype.init = function(obj) {
 	    this._template = this._preprocess(obj);
 	}
+	RangeGenerator.prototype.f = RangeGenerator.value;
 	RangeGenerator.prototype._preprocess = function preprocess(obj) {
 	    var result = {};
 	    for ( var key in obj) {
@@ -1079,28 +1129,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var val = obj[key];
 	            var r;
 	            if (Array.isArray(val)) {
-	                var from = val[0];
-	                var to = val[1];
-	                var method = val[2] || 'linear';
-	                var generator = new ValueGenerator().trim(true, true);
-	                if (typeof method === 'string') {
-	                    method = BezierEasing.css[method];
-	                    if (method) {
-	                        generator.setCoreTransformation(method);
-	                    }
-	                }
-	                if (typeof from === 'object') {
-	                    generator.range(0, 1, function(val) {
-	                        return from.mix(to, val);
-	                    });
-	                } else if (typeof from === 'function') {
-	                    generator.range(0, 1, function(val) {
-	                        return from(to, val);
-	                    });
-	                } else {
-	                    generator.range(from, to);
-	                }
-	                r = generator.build();
+	                r = this.f.apply(this, val);
 	            } else if (typeof val === 'object') {
 	                r = preprocess.call(this, val);
 	            } else {
