@@ -3,69 +3,65 @@ var ValueGenerator = require('./ValueGenerator');
 
 module.exports = RangeGenerator;
 
-RangeGenerator.value = function(from, to, options) {
-    if (arguments.length === 1) {
-        options = arguments[0];
+function RangeGenerator(options, obj) {
+    var len = arguments.length;
+    var i = len - 1;
+    obj = i >= 0 ? arguments[i--] : {};
+    options = i >= 0 ? arguments[i--] : {};
+    if (!options.trim) {
+        options.trim = [ true, false ];
     }
-    options = options || {};
-    if (typeof options === 'string') {
-        options = {
-            method : options
-        };
-    }
-    options.method = options.method || 'linear';
-    if (typeof options.method === 'string') {
-        options.method = BezierEasing.css[options.method];
-    }
-    options.trim = options.trim || [ true, false ];
-
-    var generator = new ValueGenerator();
-    generator.trim.apply(generator, options.trim);
-
-    if (typeof options.domain === 'function') {
-        generator.setDomainTransformation(options.domain);
-    } else if (Array.isArray(options.domain)) {
-        generator.domain.apply(generator, options.domain);
-    }
-
-    if (typeof options.method === 'function') {
-        generator.setCoreTransformation.call(generator, options.method);
-    }
-    if (typeof from === 'object' && typeof from.mix === 'function') {
-        generator.range(0, 1, function(val) {
-            var result = from.mix(to, val);
-            return result;
-        });
-    } else if (typeof from === 'function') {
-        generator.range(0, 1, function(val) {
-            return from(to, val);
-        });
-    } else if (typeof options.range === 'function') {
-        generator.setRangeTransformation(options.range);
-    } else {
-        generator.range(from, to);
-    }
-    return generator.build();
+    this._trim = options.trim;
+    this._domain = options.domain || [ 0, 1 ];
+    this.setStyles(obj);
 }
-
-function RangeGenerator(obj) {
-    this.init(obj);
-}
-RangeGenerator.prototype.init = function(obj) {
+RangeGenerator.prototype.setStyles = function preprocess(obj) {
     this._template = this._preprocess(obj);
 }
-RangeGenerator.prototype.f = RangeGenerator.value;
 RangeGenerator.prototype._preprocess = function preprocess(obj) {
     var result = {};
     for ( var key in obj) {
         (function(key) {
             var val = obj[key];
             var r;
+            var generator = new ValueGenerator();
+            generator.trim.apply(generator, this._trim);
+            generator.domain.apply(generator, this._domain);
+            
             if (Array.isArray(val)) {
-                r = this.f.apply(this, val);
+                var from = val[0];
+                var to = val[1];
+                var method;
+
+                if (typeof from === 'object') {
+                    var options = from;
+                    if (typeof options.mix === 'function') {
+                        generator.range(0, 1, function(val) {
+                            return options.mix(to, val);
+                        });
+                    } else if (typeof options.range === 'function') {
+                        var f = options.range.bind(this);
+                        generator.setRangeTransformation(f);
+                    } else {
+                        generator.range(options.from, options.to);
+                    }
+                    method = options.method;
+                } else {
+                    generator.range(from, to);
+                    method = val[2];
+                }
+                method = method || 'linear';
+                if (typeof method === 'string') {
+                    method = BezierEasing.css[method];
+                }
+                if (typeof method === 'function') {
+                    generator.setCoreTransformation(method);
+                }
+                r = generator.build();
             } else if (typeof val === 'object') {
                 r = preprocess.call(this, val);
             } else {
+                generator.range(val, val);
                 r = val;
             }
             if (r !== undefined) {

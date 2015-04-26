@@ -9,22 +9,31 @@ var Colors = styles.Colors;
 describe('RangeGenerator', function() {
     it('should build range-dependent styles', function() {
         var range = new RangeGenerator({
+            trim : [ true, false ],
+            domain : [ 5, 25 ]
+        }, {
             '[type="polygon"]' : {
-                'line-color' : [ Colors.red, Colors.blue, {
-                    trim : [ true, true ],
-                    method : 'linear'
-                } ],
+                'line-color' : [ Colors.red, Colors.blue, 'linear' ],
                 'line-width' : [ {
                     method : 'ease-in-out',
                     range : function(val, options) {
-                        var zoom = Math.min(options.zoom, options.to);
+                        var minZoom = this._domain[0];
+                        var maxZoom = this._domain[1];
+                        var zoom = options.zoom;
+                        if (zoom < minZoom)
+                            return;
+                        zoom = Math.max(zoom, minZoom);
                         var minWidth = 0;
                         var maxWidth = 100;
-                        var result = minWidth + val * (maxWidth - minWidth);
-                        var pow = Math.max(0, options.zoom - options.to);
+                        var progress = (Math.min(maxZoom, zoom) - minZoom) / //
+                        (maxZoom - minZoom);
+
+                        var result = minWidth + progress
+                                * (maxWidth - minWidth);
+                        var pow = Math.max(0, zoom - maxZoom);
                         result *= Math.pow(2, pow);
                         return isNaN(result) ? undefined : result;
-                    }
+                    },
                 } ],
                 'line-opacity' : [ 0.1, 0.9, 'ease-in-out' ],
                 'text' : '"Hello, world!"',
@@ -42,8 +51,7 @@ describe('RangeGenerator', function() {
         var from = 5;
         var to = 25;
         function test(val, control) {
-            var progress = (val - from) / (to - from);
-            var res = range.generate(progress, {
+            var res = range.generate(val, {
                 zoom : val,
                 from : from,
                 to : to
@@ -52,13 +60,13 @@ describe('RangeGenerator', function() {
             return res;
         }
         test(from - 2, {
-            "[type=\"polygon\"]" : {
-                "text" : "\"Hello, world!\"",
-                "header" : {
-                    "test" : {
-                        "zoom" : from - 2
+            '[type="polygon"]' : {
+                'header' : {
+                    'test' : {
+                        'zoom' : 3
                     }
-                }
+                },
+                'text' : '"Hello, world!"'
             }
         });
         test(from, {
@@ -105,7 +113,7 @@ describe('RangeGenerator', function() {
         });
         test(to + 1, {
             "[type=\"polygon\"]" : {
-                // "line-color" : "#0000ff", // Line colors are clipped
+                "line-color" : "#0000ff",
                 "line-width" : 100 * 2,
                 "line-opacity" : 0.9,
                 "text" : "\"Hello, world!\"",
@@ -119,7 +127,7 @@ describe('RangeGenerator', function() {
         });
         test(to + 2, {
             "[type=\"polygon\"]" : {
-                // "line-color" : "#0000ff", // Line colors are clipped
+                "line-color" : "#0000ff",
                 "line-width" : 100 * 4,
                 "line-opacity" : 0.9,
                 "text" : "\"Hello, world!\"",
