@@ -15,7 +15,10 @@ function RangeGenerator(options, obj) {
     this._domain = options.domain || [ 0, 1 ];
     this.setStyles(obj);
 }
-RangeGenerator.prototype.setStyles = function preprocess(obj) {
+RangeGenerator.prototype.getDomain = function() {
+    return this._domain;
+}
+RangeGenerator.prototype.setStyles = function(obj) {
     this._template = this._preprocess(obj);
 }
 RangeGenerator.prototype._preprocess = function preprocess(obj) {
@@ -27,7 +30,7 @@ RangeGenerator.prototype._preprocess = function preprocess(obj) {
             var generator = new ValueGenerator();
             generator.trim.apply(generator, this._trim);
             generator.domain.apply(generator, this._domain);
-            
+
             if (Array.isArray(val)) {
                 var from = val[0];
                 var to = val[1];

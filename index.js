@@ -4,5 +4,6 @@ module.exports = {
     Color : require('./src/Color'),
     Colors : require('./src/Colors'),
     LessSerializer : require('./src/LessSerializer'),
-    RangeGenerator : require('./src/RangeGenerator')
+    MapStyleMixin : require('./src/MapStyleMixin'),
+    RangeGenerator : require('./src/RangeGenerator'),
 };
