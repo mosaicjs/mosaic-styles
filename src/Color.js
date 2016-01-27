@@ -471,7 +471,7 @@ function protoColorBlend(f) {
         return Color.blend[f](this, color);
     };
 }
-for (f in colorBlendMode) {
+for (var f in colorBlendMode) {
     if (colorBlendMode.hasOwnProperty(f)) {
         Color.blend[f] = colorBlend(colorBlendMode[f]);
         Color.prototype[f] = protoColorBlend(f);
