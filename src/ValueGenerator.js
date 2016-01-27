@@ -1,6 +1,5 @@
 // mosaic-styles
 var BezierEasing = require('bezier-easing');
-
 module.exports = ValueGenerator;
 
 function ValueGenerator(obj) {
@@ -8,7 +7,8 @@ function ValueGenerator(obj) {
     this.reset(obj);
     this._domain = obj._domain || this._domain;
     this._range = obj._range || this._range;
-    this._core = obj._core || this._core || BezierEasing.css.linear;
+    this._core = obj._core || this._core
+            || toTransformation(BezierEasing.linear);
     return this;
 }
 
@@ -30,7 +30,7 @@ ValueGenerator.prototype = {
         this.trim(obj._trimFrom, obj._trimTo);
         this.domain(obj._from, obj._to, obj._domainTransform);
         this.range(obj._fromVal, obj._toVal, obj._rangeTransform);
-        this.setCoreTransformation(BezierEasing.css.linear);
+        this.setCoreTransformation(toTransformation(BezierEasing.linear));
         return this;
     },
     clone : function() {
@@ -133,28 +133,29 @@ ValueGenerator.prototype = {
     },
 
     bezier : function(mX1, mY1, mX2, mY2) {
-        this.setCoreTransformation(BezierEasing(mX1, mY1, mX2, mY2));
+        this.setCoreTransformation(toTransformation(//
+        BezierEasing(mX1, mY1, mX2, mY2)));
         return this;
     },
 
     ease : function() {
-        this.setCoreTransformation(BezierEasing.css.ease);
+        this.setCoreTransformation(toTransformation(BezierEasing.ease));
         return this;
     },
     linear : function() {
-        this.setCoreTransformation(BezierEasing.css.linear);
+        this.setCoreTransformation(toTransformation(BezierEasing.linear));
         return this;
     },
     easeIn : function() {
-        this.setCoreTransformation(BezierEasing.css['ease-in']);
+        this.setCoreTransformation(toTransformation(BezierEasing.easeIn));
         return this;
     },
     easeOut : function() {
-        this.setCoreTransformation(BezierEasing.css['ease-out']);
+        this.setCoreTransformation(toTransformation(BezierEasing.easeOut));
         return this;
     },
     easeInOut : function() {
-        this.setCoreTransformation(BezierEasing.css['ease-in-out']);
+        this.setCoreTransformation(toTransformation(BezierEasing.easeInOut));
         return this;
     },
 
@@ -178,3 +179,7 @@ ValueGenerator.prototype = {
     }
 
 };
+
+function toTransformation(bezier){
+    return bezier.get.bind(bezier);
+}

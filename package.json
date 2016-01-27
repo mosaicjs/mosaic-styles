@@ -24,6 +24,6 @@
     "webpack": "^1.12.12"
   },
   "dependencies": {
-    "bezier-easing": "^0.4.3"
+    "bezier-easing": "^1.1.1"
   }
 }
