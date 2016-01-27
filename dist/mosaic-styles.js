@@ -1152,6 +1152,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    } else {
 	                        generator.range(options.from, options.to);
 	                    }
+	                    if (!!options.trim) {
+	                        generator.trim.apply(generator, options.trim);
+	                    }
 	                    method = options.method;
 	                } else {
 	                    generator.range(from, to);

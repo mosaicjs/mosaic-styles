@@ -17,6 +17,8 @@ describe('RangeGenerator', function() {
                 'line-width' : [ {
                     method : 'ease-in-out',
                     range : function(val, options) {
+                        if (val === undefined)
+                            return ;
                         var minZoom = this._domain[0];
                         var maxZoom = this._domain[1];
                         var zoom = options.zoom;
