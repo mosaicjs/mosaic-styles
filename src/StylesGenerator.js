@@ -66,7 +66,7 @@ ValueGenerator.copy(StylesGenerator.prototype, {
             var result = {};
             for ( var key in generators) {
                 var f = generators[key];
-                result[key] = f(val);
+                result[key] = f.apply(this, arguments);
             }
             return result;
         };
