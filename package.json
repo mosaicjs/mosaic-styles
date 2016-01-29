@@ -1,6 +1,6 @@
 {
   "name": "mosaic-styles",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A small javascript library allowing to define CSS styles as a function",
   "main": "index.js",
   "scripts": {
