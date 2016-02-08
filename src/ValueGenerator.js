@@ -107,6 +107,11 @@ ValueGenerator.prototype = {
     },
 
     range : function(from, to, transform) {
+        if (typeof from === 'function') {
+            transform = from;
+            from = undefined;
+            to = undefined;
+        }
         this._fromVal = isNaN(from) ? 0 : from;
         this._toVal = isNaN(to) ? 1 : to;
         this._rangeTransform = transform;
@@ -130,6 +135,21 @@ ValueGenerator.prototype = {
 
     wrap : function(f) {
         return this._wrapTransformation('_core', f);
+    },
+
+    pow : function(n, base) {
+        var pow, min, max;
+        base = base || 2;
+        this.setCoreTransformation(function(val, args){
+            if (pow === undefined){
+                pow = ((n === undefined) ? (this._to - this._from + 1) : +n) || 5;
+                min = Math.pow(base, 0); // 1
+                max = Math.pow(base, pow);
+            }
+            var result = (Math.pow(base, val * pow) - min) / (max - min);
+            return result;
+        });
+        return this;
     },
 
     bezier : function(mX1, mY1, mX2, mY2) {
@@ -160,7 +180,7 @@ ValueGenerator.prototype = {
     },
 
     // ----------------------------------------------------------------------
-    // 
+    //
     _setTransformation : function(key, f) {
         this[key] = f;
         return this;
